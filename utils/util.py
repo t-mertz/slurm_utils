@@ -268,7 +268,7 @@ def find_decimals1(num):
 
 def find_max_num_decimals(values):
     """
-    Find the maximum number of decimals for an interable of values
+    Find the maximum number of decimals for an iterable of values
     or a single value. The decimal point is included in the return value.
     """
 
@@ -288,9 +288,9 @@ def str_to_bool(string):
     Convert string to bool.
     Not case sensitive.
     """
-    if string.lower() in "true":
+    if string.lower().strip() == "true":
         return True
-    elif string.lower() == "false":
+    elif string.lower().strip() == "false":
         return False
     else:
         raise Exception("Cannot convert '{}' to bool.".format(string))

@@ -2,6 +2,8 @@ import subprocess
 import os
 import pwd
 
+CATCH_EXCEPTIONS = True
+
 def process_input(argv):
     """
     Process the argument list and determine execution mode.
@@ -18,21 +20,30 @@ def process_input(argv):
             try:
                 num = int(argv[i+1])
             except TypeError:
-                print("Input must be integer.")
+                if CATCH_EXCEPTIONS:
+                    print("Input must be integer.")
+                else:
+                    raise TypeError("Input must be integer.")
             i += 2
         elif arg.strip() == "-f":
             mode = "first"
             try:
                 num = int(argv[i+1])
             except TypeError:
-                print("Input must be integer.")
+                if CATCH_EXCEPTIONS:
+                    print("Input must be integer.")
+                else:
+                    raise TypeError("Input must be integer.")
             i += 2
         else:
             mode = "ind"
             try:
                 num = int(argv[i])
             except TypeError:
-                print("Input must be integer.")
+                if CATCH_EXCEPTIONS:
+                    print("Input must be integer.")
+                else:
+                    raise TypeError("Input must be integer.")
             i += 1
     
     return mode, num
