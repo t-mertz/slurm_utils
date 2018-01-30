@@ -746,6 +746,13 @@ class Submitter(ParameterIterator, JobDB):
         #print(replace_items)
         util.copy_replace(self._settings.get('script_path'), filepath, wildcard_list, replace_items)
 
+        # copy also other files and replace occurrences of parameters
+        if 'other_files' in self._settings:
+            for filename in self._settings.get('other_files'):
+                tmp_filename = os.path.basename(self._settings.get('script_path'))
+                tmp_filepath = os.path.join(dirname, tmp_filename)
+                util.copy_replace(filename, tmp_filepath, wildcard_list, replace_items)
+
         if not self._settings.get('test_mode'):
             # submit script file
             p = subprocess.Popen(["sbatch", self._settings.get('cmd_arguments'), '-D', dirname, filepath], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)

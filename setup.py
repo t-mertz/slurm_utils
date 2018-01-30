@@ -13,7 +13,7 @@ except ImportError:
 """
 
 NAME = 'ssubmit'
-VERSION = '0.1dev1'
+VERSION = '0.2dev1'
 
 setup(
     name=NAME,
