@@ -98,6 +98,8 @@ def parameters_from_ini(path):
         #print d['name']
         if d['name'].lower() == 'general':
             general_ind.append(ind)
+            if 'other_files' in d:
+                d.update({'other_files': str2list(d['other_files']),})
         elif d['name'].lower() == 'pconfig':
             pcfg = d # create a local copy of the parameter settings dictionary
             pcfg.pop('name') # remove name key
@@ -197,3 +199,12 @@ def split_vector_sequence(s):
         vec_list.append(np.array([float(val) for val in vs]))
     
     return vec_list
+
+def str2list(s):
+    """Convert a string to a list.
+
+    An input "a,b,c" would be converted to ['a', 'b', 'c'].
+    Commas separate different entries.
+    Type conversion is not done.
+    """
+    return s.split(',').strip()
