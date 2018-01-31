@@ -213,6 +213,39 @@ def generate_format_spec(num_vals, sep, dtypes, decimals=None):
     # remove additional separator from output
     return out[:-len(sep)]
 
+
+def generate_named_index_format_spec(parameters, sep, sep1=""):
+    """
+    Generate a format specifier for generic input.
+    
+    --------------------------------------------------------------
+    
+    Input
+    
+    parameters : names of the parameters to appear in the formatter
+    sep        : separator string (could be '_', '-', '--' ...)
+                 used to separate wild-cards
+
+    --------------------------------------------------------------
+    
+    Output
+    
+    String of the form: "<parameters1><sep1>{0:d}<sep><parameters2><sep1>{1:d}<sep>...",
+    where each occurrence of <sep> is replaced by the separator string. 
+    """
+    num_vals = len(parameters)
+
+    # construct actual output
+    out = ""
+    for i, pval in enumerate(parameters):
+        out += pval
+        out += sep1
+        out += "{" + str(i) + ":" + "d" + "}"
+        out += sep
+    
+    # remove additional separator from output
+    return out[:-len(sep)]
+
 def find_decimals(value, maxlen=10):
     """
     Find the decimal representation of `value`.

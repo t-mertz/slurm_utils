@@ -100,6 +100,8 @@ def parameters_from_ini(path):
             general_ind.append(ind)
             if 'other_files' in d:
                 d.update({'other_files': str2list(d['other_files']),})
+            if 'use_index' in d:
+                d.update({'use_index': str2bool(d['use_index']),})
         elif d['name'].lower() == 'pconfig':
             pcfg = d # create a local copy of the parameter settings dictionary
             pcfg.pop('name') # remove name key
@@ -207,4 +209,8 @@ def str2list(s):
     Commas separate different entries.
     Type conversion is not done.
     """
-    return s.split(',').strip()
+    return [e.strip() for e in s.split(',')]
+
+def str2bool(s):
+    """Convert string to bool."""
+    return s in ["true", "True", "TRUE"]
