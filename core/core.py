@@ -18,7 +18,7 @@ if int(PY_VER[0]) < 3:
     import exceptions
 
 
-VERSION = '0.1'
+VERSION = '0.2'
 AUTHOR = "Thomas Mertz"
 
 db_dir = os.path.expanduser(os.path.join('~','.ssubmit'))
@@ -231,6 +231,7 @@ class ParameterIterator(object):
         settings.update([['logfile_name', 'slurm.log']])
         settings.update([['cmd_arguments', '']])
         settings.update([['write_parameter_info', True]])
+        settings.update([['use_index', False]])
 
         self._settings = settings
     
@@ -277,6 +278,9 @@ class ParameterIterator(object):
         decimals = None
         format_str = util.generate_format_spec(num_dname_vals, "_", dtypes, decimals)
 
+        if self._settings['use_index']:
+            format_str = util.generate_named_index_format_spec(self._settings['par_in_dirname'], "_")
+
         self._dformat_str = format_str
 
     def create_par_in_dirname_inds(self):
@@ -290,10 +294,13 @@ class ParameterIterator(object):
         
         self._pid_inds = np.asarray(pid_inds)
 
-    def get_dirname(self, plist):
-        
-        return self._dformat_str.format(*list(np.asarray(plist)[self._pid_inds]))
-    
+    def get_dirname(self, plist, job_idx):
+        if self._settings['use_index']:
+            return self._dformat_str.format(*list(np.asarray(self._params.get_inds_per_ax(job_idx))[self._pid_inds]))
+        else:
+            return self._dformat_str.format(*list(np.asarray(plist)[self._pid_inds]))
+
+
     def create_pformat_str(self, all=False):
 
         if all:
@@ -339,7 +346,15 @@ class ParameterIterator(object):
 
         self._pformat_list_all = formatter
 
+    def create_dformatlist_str(self):
+        """
+        Create formatter string for list of all parameters listed in directory names.
+        """
+        format_str = util.generate_named_index_format_spec(self._settings['par_in_dirname'], "_", "=")
+        formatter_lst = format_str.split("_")
+        formatter = ", ".join(formatter_lst)
 
+        self._dformatlist_str = formatter
 
 # ================================================================================
 
@@ -500,9 +515,13 @@ class Submitter(ParameterIterator, JobDB):
             # later settings override earlier settings.
 
             self.setup_default_settings()
+            print(self._settings.get('test_mode'))
             self.update_ini_settings()
+            print(self._settings.get('test_mode'))
             self.update_cmd_settings()
+            print(self._settings.get('test_mode'))
             self.fix_settings_format()
+            print(self._settings.get('test_mode'))
 
             self._job_count = Jobs()
 
@@ -511,6 +530,7 @@ class Submitter(ParameterIterator, JobDB):
 
             # setup format strings for directory names and parameter lists
             self.create_dformat_str()
+            self.create_dformatlist_str()
             self.create_pformat_str()
             self.create_pformat_str(all=True)
             self.create_pformat_list()
@@ -638,8 +658,8 @@ class Submitter(ParameterIterator, JobDB):
 
         # do the iteration, call execute for every job
         for job_idx, cur_p in enumerate(self._params[first-1:last]):
-            self.log("{}. Submitting job for ".format(job_idx) + self._pformat_str.format(*cur_p))
-            self.execute(first + job_idx, cur_p)
+            self.log("{}. Submitting job for ".format(first+job_idx) + self._pformat_str.format(*cur_p) + " | indices: " + self._dformatlist_str.format(*self._params.get_inds_per_ax(job_idx)))
+            self.execute(first-1+job_idx, cur_p)
 
     def get_num_jobs(self, start, num):
         """
@@ -698,7 +718,7 @@ class Submitter(ParameterIterator, JobDB):
     def execute(self, job_idx, cur_p):
         
         # get directory name
-        dirname = self.get_dirname(cur_p)
+        dirname = self.get_dirname(cur_p, job_idx)
 
         # create directory if it doesn't exist
         retval = util.assert_dir(dirname)
@@ -743,18 +763,21 @@ class Submitter(ParameterIterator, JobDB):
         #print(plist)
         #replace_items = [fstr.format(p) for fstr, p in zip(self._pformat_list_all, plist)] #.append(jobname)
         replace_items = [str(p) for p in plist]
+        replace_items.append(jobname)
         #print(replace_items)
         util.copy_replace(self._settings.get('script_path'), filepath, wildcard_list, replace_items)
 
         # copy also other files and replace occurrences of parameters
         if 'other_files' in self._settings:
             for filename in self._settings.get('other_files'):
-                tmp_filename = os.path.basename(self._settings.get('script_path'))
+                tmp_filename = os.path.basename(filename)
                 tmp_filepath = os.path.join(dirname, tmp_filename)
                 util.copy_replace(filename, tmp_filepath, wildcard_list, replace_items)
 
+        print(self._settings.get('test_mode'))
         if not self._settings.get('test_mode'):
             # submit script file
+            print("hello")
             p = subprocess.Popen(["sbatch", self._settings.get('cmd_arguments'), '-D', dirname, filepath], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             out_str, err_str = p.communicate()
         else:
@@ -976,11 +999,11 @@ class StatusChecker(ParameterIterator, JobDB):
     def check_outfile(self, job_id):
         raise NotImplementedError("StatusChecker.check_outfile")
     
-    def find_in_dir(self, plist):
+    def find_in_dir(self, plist, job_idx):
         """
         Find job ID from out files in subdirectory corresponding to `plist`.
         """
-        dirname = self.get_dirname(plist)
+        dirname = self.get_dirname(plist, job_idx)
         outfiles = glob.glob(os.path.join(dirname, "*.out"))
 
         job_id = int(outfiles.sort()[-1].split(".")[0].split('-')[1])
@@ -1009,7 +1032,8 @@ class StatusChecker(ParameterIterator, JobDB):
             for idx, dir in enumerate(dirlist):
                 # find parameters from dirname
                 plist = get_plist(dir)
-                self.execute(idx, plist)
+                linear_idx = self._params.get_number(plist) # linear index of the parameters
+                self.execute(linear_idx, plist)
             
         elif self._src_mode == "file":
             #raise NotImplementedError("option -f")
@@ -1022,7 +1046,7 @@ class StatusChecker(ParameterIterator, JobDB):
         Call the status checks and print outputs to screen.
         """
 
-        dirname = self.get_dirname(plist)
+        dirname = self.get_dirname(plist, job_idx)
 
         status = None
 
@@ -1033,7 +1057,7 @@ class StatusChecker(ParameterIterator, JobDB):
             job_id = self.find_in_job_db(plist, 'id')
         except:
             try:
-                job_id = self.find_in_dir(plist)
+                job_id = self.find_in_dir(plist, job_idx)
             except MissingDirectoryError:
                 status = "Job and directory not found"
             except MissingOutfileError:

@@ -360,9 +360,24 @@ class Parameters(object):
             if self._names[i] == string:
                 return i
             i += 1
-        
+
         raise ParameterNotFoundError(string)
-        
+
+    def get_inds_per_ax(self, number):
+        """Return the indices per axis corresponding to a total index."""
+        assert number < self._maxnum
+
+        # create index list for every axis.
+        idx = []
+        for d in range(self._dim-1):
+            #print(self._axis_dim[d:])
+            dim_prod = prod(self._axis_dim[d+1:]) # product of dimensions
+            idx += [number // dim_prod]
+            number = number % dim_prod
+        idx += [number]
+
+        return idx
+
     def __repr__(self):
         out_str = ""
         if hasattr(self, '_names'):
@@ -403,7 +418,7 @@ class Parameters(object):
             self._values.insert(index, p[1])
             self._axis_dim.insert(index, len(p[1]))
         self._maxnum = prod(self._axis_dim)
-    
+
     def __iter__(self):
         for i in range(self._maxnum):
             yield self.get_values(i)

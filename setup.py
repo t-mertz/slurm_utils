@@ -3,6 +3,7 @@
 from distutils.core import setup
 import setuptools
 import shutil
+import sys
 
 """
 try:
@@ -12,24 +13,24 @@ except ImportError:
     sys.exit(1)
 """
 
-NAME = 'ssubmit'
-VERSION = '0.2dev1'
-
-setup(
-    name=NAME,
-    version=VERSION,
-    author='Thomas Mertz',
-    url='http://www.thomasmertz.eu',
-    license='GNU GPL',
-    #py_modules=['core', 'parameters', 'ini', 'common', 'util', 
-    #        'runscancels', 'runstatus', 'runsubmit', 'scancel'],
-    #data_files=[('config', 'config.ini'),]
-    packages=setuptools.find_packages(),
-    install_requires='numpy',
-    package_data={
-        'config' : ['config.ini'],
-    }
-)
+NAME = 'sutils'
+VERSION = '0.2.dev1'
+if sys.argv[1].strip() != "uninstall":
+    setup(
+        name=NAME,
+        version=VERSION,
+        author='Thomas Mertz',
+        url='http://www.thomasmertz.eu',
+        license='GNU GPL',
+        #py_modules=['core', 'parameters', 'ini', 'common', 'util', 
+        #        'runscancels', 'runstatus', 'runsubmit', 'scancel'],
+        #data_files=[('config', 'config.ini'),]
+        packages=setuptools.find_packages(),
+        install_requires='numpy',
+        package_data={
+            'config' : ['config.ini'],
+        }
+    )
 import sys, os
 import site
 
@@ -49,7 +50,8 @@ site_dir = os.path.join(site_dir, NAME + "-" + VERSION + "-py" + pyver + ".egg")
 # set shell aliases when install
 if sys.argv[1].strip() == "install":
     if not installed_flag:
-        print("Registering shell aliases")
+        #print("Registering shell aliases")
+        print("Please set the following shell aliases:")
         # set shell alias for ssubmit
         submit_comment_str = "# Type `ssubmit` to run the ssubmit SLURM utility.\n"
         submit_alias_str = "alias ssubmit='python {}'\n".format(os.path.join(site_dir, 'core', 'runsubmit.py'))
@@ -62,6 +64,11 @@ if sys.argv[1].strip() == "install":
         cancel_comment_str = "# Type `scancels` to run the scancels SLURM utility.\n"
         cancel_alias_str = "alias scancels='python {}'\n".format(os.path.join(site_dir, 'core', 'runcancels.py'))
 
+        print(submit_alias_str)
+        print(status_alias_str)
+        print(cancel_alias_str)
+        # messing with bashrc is too dangerous. Let the user do it.
+        """
         with open(os.path.expanduser(os.path.join('~', '.bashrc')), 'a') as bashrc:
             bashrc.write(submit_comment_str)
             bashrc.write(submit_alias_str)
@@ -81,7 +88,9 @@ if sys.argv[1].strip() == "install":
         flag_file.close()
 
         print("Done registering shell aliases")
+        """
 elif sys.argv[1].strip() == "uninstall":
+    """
     if installed_flag:
         print("Removing shell aliases")
         # remove aliases
@@ -117,12 +126,12 @@ elif sys.argv[1].strip() == "uninstall":
         bashrc_out.close()
 
         # replace old .bashrc by tmp file
-        os.rename(bashrc_path, tmp_path)
+        os.rename(tmp_path, bashrc_path)
 
         # remove flag
         os.unlink(flag_path)
         
         print("Done removing shell aliases")
-    
+    """
     # remove database folder
     shutil.rmtree(os.path.expanduser(os.path.join("~", ".ssubmit")))
