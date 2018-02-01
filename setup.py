@@ -15,22 +15,31 @@ except ImportError:
 
 NAME = 'sutils'
 VERSION = '0.2.dev1'
-if sys.argv[1].strip() != "uninstall":
-    setup(
-        name=NAME,
-        version=VERSION,
-        author='Thomas Mertz',
-        url='http://www.thomasmertz.eu',
-        license='GNU GPL',
-        #py_modules=['core', 'parameters', 'ini', 'common', 'util', 
-        #        'runscancels', 'runstatus', 'runsubmit', 'scancel'],
-        #data_files=[('config', 'config.ini'),]
-        packages=setuptools.find_packages(),
-        install_requires='numpy',
-        package_data={
-            'config' : ['config.ini'],
-        }
-    )
+if len(sys.argv) > 1:
+    if sys.argv[1].strip() != "uninstall":
+        setup(
+            name=NAME,
+            version=VERSION,
+            author='Thomas Mertz',
+            url='http://www.thomasmertz.eu',
+            license='GNU GPL',
+            #py_modules=['core', 'parameters', 'ini', 'common', 'util', 
+            #        'runscancels', 'runstatus', 'runsubmit', 'scancel'],
+            #data_files=[('config', 'config.ini'),]
+            packages=setuptools.find_packages('.'),
+            install_requires='numpy',
+            package_data={
+                 'sutils.config' : ['config.ini'],
+            },
+            entry_points={'console_scripts': [
+                            'ssubmit  = sutils.bin.submit',
+                            'scancels = sutils.bin.cancel',
+                            'sstatus  = sutils.bin.status',
+                ],
+            },
+        )
+else:
+    sys.exit(0)
 import sys, os
 import site
 
@@ -49,20 +58,22 @@ site_dir = os.path.join(site_dir, NAME + "-" + VERSION + "-py" + pyver + ".egg")
 
 # set shell aliases when install
 if sys.argv[1].strip() == "install":
-    if not installed_flag:
+    #if not installed_flag:
+    if False:
+        # This is no longer needed due to entry_points
         #print("Registering shell aliases")
-        print("Please set the following shell aliases:")
+        print("\nPlease set the following shell aliases:")
         # set shell alias for ssubmit
         submit_comment_str = "# Type `ssubmit` to run the ssubmit SLURM utility.\n"
-        submit_alias_str = "alias ssubmit='python {}'\n".format(os.path.join(site_dir, 'core', 'runsubmit.py'))
+        submit_alias_str = "alias ssubmit='python {}'\n".format(os.path.join(site_dir, 'bin', 'submit'))
         
         # set shell alias for sstatus
         status_comment_str = "# Type `sstatus` to run the sstatus SLURM utility.\n"
-        status_alias_str = "alias sstatus='python {}'\n".format(os.path.join(site_dir, 'core', 'runstatus.py'))
+        status_alias_str = "alias sstatus='python {}'\n".format(os.path.join(site_dir, 'bin', 'status'))
 
         # set shell alias for scancels
         cancel_comment_str = "# Type `scancels` to run the scancels SLURM utility.\n"
-        cancel_alias_str = "alias scancels='python {}'\n".format(os.path.join(site_dir, 'core', 'runcancels.py'))
+        cancel_alias_str = "alias scancels='python {}'\n".format(os.path.join(site_dir, 'bin', 'cancel'))
 
         print(submit_alias_str)
         print(status_alias_str)

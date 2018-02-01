@@ -129,7 +129,7 @@ def copy_replace(in_path, out_path, pattern, subst):
     save the copy to `out_path`.
     `pattern` and `subst` can be iterable.
     """
-    if hasattr(pattern, '__iter__'):
+    if hasattr(pattern, '__iter__') and (type(pattern) is not str):
         iterable = True
         num_patterns = len(pattern)
     else: iterable = False

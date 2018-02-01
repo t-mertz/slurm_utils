@@ -102,6 +102,8 @@ def parameters_from_ini(path):
                 d.update({'other_files': str2list(d['other_files']),})
             if 'use_index' in d:
                 d.update({'use_index': str2bool(d['use_index']),})
+            if 'test_mode' in d:
+                d['test_mode'] = str2bool(d['test_mode'])
         elif d['name'].lower() == 'pconfig':
             pcfg = d # create a local copy of the parameter settings dictionary
             pcfg.pop('name') # remove name key
@@ -213,4 +215,4 @@ def str2list(s):
 
 def str2bool(s):
     """Convert string to bool."""
-    return s in ["true", "True", "TRUE"]
+    return s.strip().lower() == "true"

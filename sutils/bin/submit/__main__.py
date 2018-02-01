@@ -1,5 +1,5 @@
 #import ssubmit
-import core
+import sutils.core.core as core
 import sys
 
 if __name__ == "__main__":
