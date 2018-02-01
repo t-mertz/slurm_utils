@@ -1,4 +1,4 @@
-import scancel
+import sutils.core.scancel as scancel
 import sys
 
 if __name__ == "__main__":

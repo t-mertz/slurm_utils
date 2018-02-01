@@ -1,4 +1,5 @@
 import subprocess
+import sys
 import os
 import pwd
 
@@ -12,8 +13,9 @@ def process_input(argv):
 
     if remaining == 0:
         print("Must specify a job ID or a number of jobs to be cancelled (options -l, -f).")
-    i = 0
-    while remaining > 0:
+        sys.exit(0)
+    i = 1 
+    if remaining > 0:
         arg = argv[i]
         if arg.strip() == "-l":
             mode = "last"
@@ -45,6 +47,9 @@ def process_input(argv):
                 else:
                     raise TypeError("Input must be integer.")
             i += 1
+    else:
+        print("Unexpected error: No arguments.")
+        sys.exit(1)
     
     return mode, num
 
@@ -72,22 +77,33 @@ def cancel(mode, num):
         jobs = sorted(jobs)
         njobs = len(jobs)
 
+        if njobs > 0:
+            print("Found {} jobs: ".format(njobs) + ", ".join(jobs))
+        else:
+            print("No jobs found")
+            sys.exit(0)
+
         if mode == "last":
             if num > njobs:
                 minn = None
             else:
-                minn = njobs-1 - num
+                minn = max(-1, njobs-1 - num)
 
             # cancel jobs from `minn+1` to the last
             for j in jobs[-1:minn:-1]:
+                sys.stdout.write(j)
                 subprocess.call(["scancel", str(j)])
+                sys.stdout.write(" cancelled\n")
         elif mode == "first":
             if num > njobs:
                 num = None
             
             # cancel jobs from 0 to `num`
+            print("Cancelling jobs:")
             for j in jobs[:num]:
+                sys.stdout.write(j)
                 subprocess.call(["scancel", str(j)])
+                sys.stdout.write(" cancelled\n")
 
 
 def main(argv):

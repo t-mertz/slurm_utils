@@ -3,7 +3,7 @@ import subprocess
 import numpy as np
 import sys, os
 import logging
-from utils import ini, common, util
+from sutils.utils import ini, common, util
 #import ini
 #import lacommon
 #import common
@@ -21,6 +21,7 @@ if int(PY_VER[0]) < 3:
 VERSION = '0.2'
 AUTHOR = "Thomas Mertz"
 
+# make this an optional feature
 db_dir = os.path.expanduser(os.path.join('~','.ssubmit'))
 util.assert_dir(db_dir)
 
@@ -515,13 +516,9 @@ class Submitter(ParameterIterator, JobDB):
             # later settings override earlier settings.
 
             self.setup_default_settings()
-            print(self._settings.get('test_mode'))
             self.update_ini_settings()
-            print(self._settings.get('test_mode'))
             self.update_cmd_settings()
-            print(self._settings.get('test_mode'))
             self.fix_settings_format()
-            print(self._settings.get('test_mode'))
 
             self._job_count = Jobs()
 
@@ -766,6 +763,10 @@ class Submitter(ParameterIterator, JobDB):
         replace_items.append(jobname)
         #print(replace_items)
         util.copy_replace(self._settings.get('script_path'), filepath, wildcard_list, replace_items)
+        # make sure copying was successful
+        if not os.access(filepath, os.F_OK):
+            print("There was a problem copying the script file. Exiting.")
+            sys.exit(1)
 
         # copy also other files and replace occurrences of parameters
         if 'other_files' in self._settings:
@@ -774,18 +775,22 @@ class Submitter(ParameterIterator, JobDB):
                 tmp_filepath = os.path.join(dirname, tmp_filename)
                 util.copy_replace(filename, tmp_filepath, wildcard_list, replace_items)
 
-        print(self._settings.get('test_mode'))
         if not self._settings.get('test_mode'):
             # submit script file
-            print("hello")
-            p = subprocess.Popen(["sbatch", self._settings.get('cmd_arguments'), '-D', dirname, filepath], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            cmd_args = self._settings.get('cmd_arguments')
+            if cmd_args == "":
+                cmd_list = ["sbatch", '-D', dirname, filepath]
+            else:
+                cmd_list = ["sbatch", cmd_args, '-D', dirname, filepath]
+            p = subprocess.Popen(cmd_list, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             out_str, err_str = p.communicate()
+            p.wait()
         else:
             # pretend submission was successful
             self.log("> Test mode active, not submitting.")
             out_str = "JOB 1 SUBMITTED"
         
-        message = out_str
+        message = out_str.strip()
 
         # determine if submission was successful
         if "FAILED" in message.upper():
@@ -845,6 +850,9 @@ class StatusChecker(ParameterIterator, JobDB):
             ParameterIterator.__init__(self)
             JobDB.__init__(self)
             self._job_db = self.read_job_db()
+            if self._src_mode == 'file':
+                self.setup_default_settings()
+                self.update_ini_settings()
 
     def get_mode(self):
         return self._mode
@@ -1026,7 +1034,7 @@ class StatusChecker(ParameterIterator, JobDB):
             #raise NotImplementedError("option -d")
 
             # get list of subdirectories
-            dirlist = util.list_dir().sort()
+            dirlist = util.listdir().sort()
 
             # iterate over list
             for idx, dir in enumerate(dirlist):
