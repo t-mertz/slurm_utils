@@ -22,7 +22,7 @@ VERSION_MAJOR = 0
 VERSION_MINOR = 2
 VERSION = "{}.{}".format(VERSION_MAJOR, VERSION_MINOR)
 AUTHOR = "Thomas Mertz"
-COPYRIGHT_YEARS = sorted([2016, 2017])
+COPYRIGHT_YEARS = sorted([2016, 2018])
 COPYRIGHT_RANGE = "{}-{}".format(COPYRIGHT_YEARS[0], COPYRIGHT_YEARS[-1])
 
 # make this an optional feature
