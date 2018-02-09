@@ -133,7 +133,7 @@ class Parameters(object):
     modes = ['square',
              'irregular']
 
-    def __init__(self, parameters, mode='square', order='r'):
+    def __init__(self, parameters, mode='square', order='r', maxdecimals=None):
         """
         Constructor for the Parameters class.
         
@@ -154,6 +154,8 @@ class Parameters(object):
         pass
         self._dim = len(parameters) # number of parameters
         assert mode.lower().strip() in Parameters.modes, "Invalid mode: %s" % mode
+        self._maxdecimals = maxdecimals
+        #self._round_value = lambda x: x if maxdecimals is None else np.around(x, maxdecimals)
 
         if mode == 'square':
             if type(parameters[0]) == Parameter:
@@ -172,6 +174,11 @@ class Parameters(object):
             self._maxnum = prod(self._axis_dim) # number of different parameter combinations
             if self._maxnum < 1:
                 raise EmptyParameterError(self._maxnum)
+            
+            maxdigits = 0
+            for i in range(self._dim):
+                maxdigits = np.max([maxdigits, abs(np.max(self._values[i]))])
+            self._maxdigits = 1 + np.log10(np.ceil(maxdigits))
             
         elif mode == 'irregular':
             self._values = parameters['values']
@@ -193,6 +200,14 @@ class Parameters(object):
         """
         return self._maxnum
     
+    def get_maxdecimals(self):
+        """Return maximum number of decimals."""
+        return self._maxdecimals
+    
+    def get_maxdigits(self):
+        """Return maximum number of digits."""
+        return self._maxdigits
+
     def get_types(self):
         """
         Getter method. Get types of all parameters.
@@ -284,6 +299,16 @@ class Parameters(object):
             return int(sum(tmp))
         else:
             raise ParameterNotFoundError(values)
+
+    def get_number_by_indexlist(self, indexlist):
+        """Return the total index corresponding to per-axis indices."""
+        assert len(indexlist) == self._dim
+
+        index = 0
+        for i in range(self._dim-1, 0, -1):
+            index += indexlist[i] * np.prod(self._axis_dim[i:self._dim-1])
+        
+        return index
 
     def search(self, parameters):
         """

@@ -18,8 +18,12 @@ if int(PY_VER[0]) < 3:
     import exceptions
 
 
-VERSION = '0.2'
+VERSION_MAJOR = 0
+VERSION_MINOR = 2
+VERSION = "{}.{}".format(VERSION_MAJOR, VERSION_MINOR)
 AUTHOR = "Thomas Mertz"
+COPYRIGHT_YEARS = sorted([2016, 2017])
+COPYRIGHT_RANGE = "{}-{}".format(COPYRIGHT_YEARS[0], COPYRIGHT_YEARS[-1])
 
 # make this an optional feature
 db_dir = os.path.expanduser(os.path.join('~','.ssubmit'))
@@ -38,7 +42,7 @@ class ConfigPathError(Exception):
     Raised when invalid config path is detected.
     """
     def __init__(self, value=''):
-        self.value = value
+        self._value = value
     
     def __str__(self):
         return repr(self._value)
@@ -48,7 +52,7 @@ class MissingDirectoryError(Exception):
     Raised when directory is not found by StatusChecker.
     """
     def __init__(self, value=''):
-        self.value = value
+        self._value = value
     
     def __str__(self):
         return repr(self._value)
@@ -58,11 +62,18 @@ class MissingOutfileError(Exception):
     Raised when no outfile is found by StatusChecker.
     """
     def __init__(self, value=''):
-        self.value = value
+        self._value = value
     
     def __str__(self):
         return repr(self._value)
 
+class InvalidDirectoryNameError(Exception):
+    """Raised when directory name does not comply with the parameters defined."""
+    def __init__(self, value=''):
+        self._value = value
+    
+    def __str__(self):
+        return repr(self._value)
 
 
 # ================================================================================
@@ -139,7 +150,7 @@ class Jobs(object):
 
 
 
-class JobStatus(Jobs):
+class JobStatusCounter(Jobs):
     def __init__(self):
         Jobs.__init__(self)
         self._pending = 0
@@ -177,14 +188,22 @@ class JobStatus(Jobs):
 class ParameterIterator(object):
 
     def __init__(self):
-        self._supdate = dict()
-        self._settings = dict()
+        self._supdate = None
+        self._settings = None
         self._params = None
-        self._pid_inds = []
+        self._pid_inds = None
 
-        self._dformat_str = ""
-        self._pformat_str = ""
-        self._pformat_list_all = []
+        self._dformat_str = None
+        self._pformat_str = None
+        self._pformat_list_all = None
+
+        self.setup_default_settings()
+        self.update_ini_settings() # we need this to setup the parameters before we can fix 'par_in_dirname'
+        self.fix_settings_format()
+        self.create_par_in_dirname_inds()
+
+        self.create_dformat_str()
+        self.create_pformat_str()
 
     def fix_settings_format(self):
 
@@ -251,9 +270,9 @@ class ParameterIterator(object):
         except IOError:
             sys.stdout.write('Error! Could not read file `{}`.\n'.format(self._settings.get('config_path')))
             sys.exit(1)
-        except TypeError:
-            sys.stdout.write('Error! Could not read file `{}`.\n'.format(self._settings.get('config_path')))
-            sys.exit(1)
+        #except TypeError:
+        #    sys.stdout.write('Error! Could not read file `{}`.\n'.format(self._settings.get('config_path')))
+        #    sys.exit(1)
         except:
             raise
 
@@ -293,14 +312,53 @@ class ParameterIterator(object):
         for p in self._settings.get('par_in_dirname'):
             pid_inds.append(self._params.get_axis(p))
         
-        self._pid_inds = np.asarray(pid_inds)
+        self._pid_inds = np.asarray(pid_inds, dtype=int)
 
     def get_dirname(self, plist, job_idx):
+        """Create a directory name given a set of parameter values."""
         if self._settings['use_index']:
-            return self._dformat_str.format(*list(np.asarray(self._params.get_inds_per_ax(job_idx))[self._pid_inds]))
+            return self._dformat_str.format(*list(np.asarray(self._params.get_inds_per_ax(job_idx), dtype=int)[self._pid_inds]))
         else:
             return self._dformat_str.format(*list(np.asarray(plist)[self._pid_inds]))
 
+    def get_plist(self, dirname):
+        """Inversion of get_dirname."""
+        plist = []
+
+
+        ax_names = self._params.get_names.get_names()
+
+        valuestr_list = dirname.strip().split("_")
+        for i, p in enumerate(ax_names):
+            try:
+                pos = self._settings['par_in_dirname'].index(p)
+                plist.append(float(valuestr_list[pos].replace(p, '')))
+            except ValueError:
+                plist.append(self._params.get_values_ax(i)[0])
+        
+        return plist
+    
+    def get_index(self, dirname):
+        """Inversion of get_dirname in case indices are used in directory names."""
+        job_idx = None
+        job_idx_list = []
+        
+        ax_names = self._params.get_names()
+
+        indexstr_list = dirname.strip().split("_")
+        for i, p in enumerate(ax_names):
+            try:
+                pos = self._settings['par_in_dirname'].index(p)
+                job_idx_list.append(int(indexstr_list[pos].replace(p, '')))
+            except ValueError:
+                job_idx_list.append(0)
+            except IndexError:
+                # this can only happen if the directory name does not comply with the convention set by the config file
+                raise InvalidDirectoryNameError(dirname)
+
+        job_idx = self._params.get_number_by_indexlist(job_idx_list)
+
+        return job_idx
 
     def create_pformat_str(self, all=False):
 
@@ -313,8 +371,8 @@ class ParameterIterator(object):
             num = len(self._settings['par_in_dirname'])
             dtypes = [ type(self._params.get_values_ax(name)[0]) for name in self._settings['par_in_dirname']]
         
-        decimals = None
-        format_str = util.generate_format_spec(num, "_", dtypes, decimals)
+        decimals = self._params.get_maxdecimals()
+        format_str = util.generate_format_spec(num, "_", dtypes, decimals, self._params.get_maxdigits())
         
         format_ids = format_str.split("_")
         format_strs = ["{name}={id}, ".format(name=name, id=format_ids[i]) for i,name in enumerate(pars)]
@@ -334,7 +392,11 @@ class ParameterIterator(object):
         if all:
             return self._pformat_str_all.format(*plist)
         else:
-            return self._pformat_str.format(*plist[self._pid_inds])
+            try:
+                return self._pformat_str.format(*list(np.array(plist)[self._pid_inds]))
+            except:
+                #print(plist, self._pid_inds)
+                raise
     
     def create_pformat_list(self):
         """
@@ -614,7 +676,7 @@ class Submitter(ParameterIterator, JobDB):
         help_msg += sep
         help_msg += vert + " "*21 + "You are running ssubmit version {}".format(VERSION) + " "*22 + vert + "\n"
         help_msg += "|" + " "*78 + "|\n"
-        help_msg += "|" + " "*23 + "Copyright (c) 2016 {}".format(AUTHOR)  + " "*24 + vert + "\n"
+        help_msg += "|" + " "*21 + "Copyright (c) {} {}".format(COPYRIGHT_RANGE, AUTHOR)  + " "*21 + vert + "\n"
         help_msg += sep
         help_msg += "\nHelp mode is active\n\n"
         help_msg += sep
@@ -850,6 +912,7 @@ class StatusChecker(ParameterIterator, JobDB):
             ParameterIterator.__init__(self)
             JobDB.__init__(self)
             self._job_db = self.read_job_db()
+            self._job_count = JobStatusCounter()
             if self._src_mode == 'file':
                 self.setup_default_settings()
                 self.update_ini_settings()
@@ -932,7 +995,7 @@ class StatusChecker(ParameterIterator, JobDB):
         help_msg += sep
         help_msg += vert + " "*21 + "You are running sstatus version {}".format(VERSION) + " "*22 + vert + "\n"
         help_msg += "|" + " "*78 + "|\n"
-        help_msg += "|" + " "*23 + "Copyright (c) 2016 {}".format(AUTHOR)  + " "*24 + vert + "\n"
+        help_msg += "|" + " "*21 + "Copyright (c) {} {}".format(COPYRIGHT_RANGE, AUTHOR)  + " "*21 + vert + "\n"
         help_msg += sep
         help_msg += "\nHelp mode is active\n\n"
         help_msg += sep
@@ -1001,8 +1064,34 @@ class StatusChecker(ParameterIterator, JobDB):
         return slurm_status
 
     def check_squeue(self, job_id):
+        p = subprocess.Popen(['squeue', '-h', '-j', str(job_id)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         
-        raise NotImplementedError("StatusChecker.check_squeue")
+        p_outstr, p_errstr = p.communicate()
+        try:
+            p_outline = p_outstr.split('\n')[0] # this should be the line containing the job info
+        except IndexError:
+            return JobStatusMessage(JobStatusMessage.not_found_in_queue)
+        
+        p.wait()
+
+        if 'invalid job id' in p_errstr.lower():
+            slurm_status = JobStatusMessage(JobStatusMessage.not_found_in_queue)
+        elif len(p_errstr.strip()) > 0:
+            print("Unexpected error: " + p_errstr.strip())
+        else:
+            #print(p_outline, p_outstr, p_errstr)
+            job_no = p_outline.split()[0].strip()
+            slurm_status = p_outline.split()[4].strip()
+
+            if slurm_status == 'R':
+                self._job_count.running()
+                slurm_status = JobStatusMessage(JobStatusMessage.running)
+            elif slurm_status == 'PD':
+                self._job_count.pending()
+                slurm_status = JobStatusMessage(JobStatusMessage.pending)
+
+        return slurm_status
+
     
     def check_outfile(self, job_id):
         raise NotImplementedError("StatusChecker.check_outfile")
@@ -1012,9 +1101,17 @@ class StatusChecker(ParameterIterator, JobDB):
         Find job ID from out files in subdirectory corresponding to `plist`.
         """
         dirname = self.get_dirname(plist, job_idx)
-        outfiles = glob.glob(os.path.join(dirname, "*.out"))
+        if not os.access(dirname, os.F_OK):
+            if False:
+                print("Directory not found: " + dirname + ", plist={}, job_idx={}".format(plist, job_idx))
+            raise MissingDirectoryError(dirname)
+        outfiles = glob.glob(os.path.join(dirname, "slurm-*.out"))
 
-        job_id = int(outfiles.sort()[-1].split(".")[0].split('-')[1])
+        try:
+            job_id = int(sorted(outfiles)[-1].split(".")[0].split('-')[1])
+        except IndexError:
+            raise MissingOutfileError('')
+            
 
         return job_id
 
@@ -1034,14 +1131,22 @@ class StatusChecker(ParameterIterator, JobDB):
             #raise NotImplementedError("option -d")
 
             # get list of subdirectories
-            dirlist = util.listdir().sort()
+            dirlist = sorted(util.listdirs('.'))
 
             # iterate over list
-            for idx, dir in enumerate(dirlist):
+            for idx, directory in enumerate(dirlist):
                 # find parameters from dirname
-                plist = get_plist(dir)
-                linear_idx = self._params.get_number(plist) # linear index of the parameters
-                self.execute(linear_idx, plist)
+                try:
+                    if self._settings['use_index']:
+                        linear_idx = self.get_index(directory)
+                        plist = self._params.get_values(linear_idx) # bug: this can produce the same linear index for different directories
+                    else:
+                        plist = self.get_plist(directory)
+                        linear_idx = self._params.get_number(plist) # linear index of the parameters
+                    self.execute(linear_idx, plist)
+                except InvalidDirectoryNameError:
+                    print("Ignoring {}".format(directory))
+                
             
         elif self._src_mode == "file":
             #raise NotImplementedError("option -f")
@@ -1058,6 +1163,9 @@ class StatusChecker(ParameterIterator, JobDB):
 
         status = None
 
+        skip_misses = True  # setting this skips output for directories, which have not been created yet
+        skip = False        # indicates if output is to be skipped for this job_idx
+
         # find job in job_db
         try:
             #idx = np.where(self._job_db[0] == os.path.realpath(dirname))[0]
@@ -1067,25 +1175,66 @@ class StatusChecker(ParameterIterator, JobDB):
             try:
                 job_id = self.find_in_dir(plist, job_idx)
             except MissingDirectoryError:
-                status = "Job and directory not found"
+                job_id = -1
+                status = JobStatusMessage(JobStatusMessage.dir_not_found)
+                skip = True
             except MissingOutfileError:
-                status = "No output file found"
+                job_id = -1
+                status = JobStatusMessage(JobStatusMessage.outfile_not_found)
 
         # if job ID could be retrieved
         if status is None:
             status = self.check_squeue(job_id)
-            if status == "job ID not found":
-                status = self.check_accounting(job_id)
+            if status == 0:
+                try:
+                    status = self.check_accounting(job_id)
+                except NotImplementedError:
+                    pass
             
-            if status == "job ID not found":
-                status = self.check_outfile(job_id)
+            if status == 0:
+                try:
+                    status = self.check_outfile(job_id)
+                except NotImplementedError:
+                    pass
 
         sep = " "*4
-        self.log("{job_id}{sep}{parameters}{sep}{dirname}{sep}{status}".format(job_id=job_id, sep=sep, parameters=plist, dirname=dirname,status=status))
+        if not skip:
+            pstr = self.get_pformat_str(plist)
+            self.log("{job_id:6d}{sep}{parameters:10}{sep}{dirname:10}{sep}{status}".format(job_id=job_id, sep=sep, parameters=pstr, dirname=dirname,status=str(status)))
 
     def log(self, logstring):
 
         sys.stdout.write(logstring + "\n")
+
+
+class JobStatusMessage(object):
+    not_found_in_queue = 0
+    not_found = 1
+    dir_not_found = 2
+    outfile_not_found = 3
+    running = 4
+    pending = 5
+    cancelled = 6
+    failed = 7
+
+    str_list = ["ID not found in queue",
+                "ID not found",
+                "Job and directory not found",
+                "No output file found",
+                "running",
+                "pending",
+                "cancelled",
+                "failed",
+    ]
+
+    def __init__(self, value):
+        if value < 8:
+            self._value = value
+        else:
+            raise ValueError("Invalid status")
+    
+    def __str__(self):
+        return JobStatusMessage.str_list[self._value]
 
 class DataProcessor(ParameterIterator):
     """
@@ -1094,11 +1243,25 @@ class DataProcessor(ParameterIterator):
     In each folder the method `process` is executed.
     """
 
-    def process(self):
+    def process(self, dirname, job_idx, plist):
         """
         Overload this function to do some processing.
         """
-        pass
+        raise NotImplementedError("Do not use base class `DataProcessor`.")
+    
+    def execute(self, job_idx, plist):
+        dirname = self.get_dirname(plist, job_idx)
+        try:
+            os.chdir(dirname) # do we want to change current working directory?
+        except OSError:
+            print("Directory {} not found. Found the following:".format(dirname), file=sys.stderr)
+            for d in sorted(util.listdirs('.')):
+                print(d, file=sys.stderr)
+            sys.exit(0)
+
+        self.process(dirname, job_idx, plist)
+
+        os.chdir('..')  # change directory back
 
 # ==================================================================================
 # ==================================================================================
@@ -1145,6 +1308,9 @@ def get_wildcard_list(params):
     wildcard_list.append("JOBNAME")
 
     return wildcard_list
+
+def version():
+    return VERSION
 
 def main(mode, *argv):
     try:
