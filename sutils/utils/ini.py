@@ -41,6 +41,7 @@ class IniFormatError(Exception):
     def __str__(self):
         return self._value
 
+
 def read_ini(path):
     """
     Read ini file and output attributes in a list of dictionaries.
@@ -107,6 +108,14 @@ def parameters_from_ini(path):
         elif d['name'].lower() == 'pconfig':
             pcfg = d # create a local copy of the parameter settings dictionary
             pcfg.pop('name') # remove name key
+            if 'maxdecimals' in pcfg:
+                try:
+                    pcfg['maxdecimals'] = int(pcfg['maxdecimals'])
+                except ValueError:
+                    if pcfg['maxdecimals'].lower() == 'none':
+                        pcfg['maxdecimals'] = None
+                    else:
+                        raise ValueError("Invalid value: " + pcfg['maxdecimals'] + " for attribute 'maxdecimals'.")
             pcfg_found = True
             pcfg_ind = ind
             

@@ -32,9 +32,9 @@ if len(sys.argv) > 1:
                  'sutils.config' : ['config.ini'],
             },
             entry_points={'console_scripts': [
-                            'ssubmit  = sutils.bin.submit',
-                            'scancels = sutils.bin.cancel',
-                            'sstatus  = sutils.bin.status',
+                            'ssubmit  = sutils.bin.submit.__main__:main',
+                            'scancels = sutils.bin.cancel.__main__:main',
+                            'sstatus  = sutils.bin.status.__main__:main',
                 ],
             },
         )

@@ -2,6 +2,7 @@ from __future__ import division
 import numpy as np
 import math
 import os
+import sys
 
 def assert_dir(path):
     """
@@ -156,7 +157,7 @@ def copy_replace(in_path, out_path, pattern, subst):
                         raise RuntimeError("Warning possible conflict!")
                     output_file.write(line.replace(pattern_itm, subst_itm))
 
-def generate_format_spec(num_vals, sep, dtypes, decimals=None):
+def generate_format_spec(num_vals, sep, dtypes, decimals=None, total_digits=3):
     """
     Generate a format specifier for generic input.
     
@@ -191,8 +192,8 @@ def generate_format_spec(num_vals, sep, dtypes, decimals=None):
                  )
     if decimals is not None:
         assert type(decimals) is int
-        dident[float] = '.{}f'.format(decimals)
-        dident[np.float64] = '.{}f'.format(decimals)
+        dident[float] = '{}.{}f'.format(3+decimals, decimals)
+        dident[np.float64] = '{}.{}f'.format(3+decimals, decimals)
                  
     if not hasattr(dtypes, '__iter__'):
         dtypes = [dtypes,] * num_vals
@@ -352,3 +353,7 @@ def get_cmd_args(argv):
             args.append(argv[i])
     
     return args, options
+
+def is_python3():
+    """Check if interpreter runs Python 3 or higher."""
+    return sys.version_info > 2
