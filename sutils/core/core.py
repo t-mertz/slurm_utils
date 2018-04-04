@@ -557,10 +557,6 @@ class Submitter(ParameterIterator, JobDB):
 
     def __init__(self, argv):
 
-        # call base class constructors
-        JobDB.__init__(self)
-        ParameterIterator.__init__(self)
-
         # determine the execution mode and supdate settings
         self.process_input(argv)
         #print(self._mode, self._supdate.get('ini_dst'))
@@ -569,6 +565,9 @@ class Submitter(ParameterIterator, JobDB):
             # copy the default ini file to the destination
             copy_default_ini(self._supdate.get('ini_dst'))
         elif self._mode == 'run':
+            # call base class constructors
+            JobDB.__init__(self)
+            ParameterIterator.__init__(self)
             
             # load the job database
             self._job_db = self.read_job_db()
@@ -647,6 +646,9 @@ class Submitter(ParameterIterator, JobDB):
                         dst = '.'
                     supdate.update([['ini_dst', dst]])
                     break
+                elif argv[i].strip() == '-h':
+                    self._mode = 'help'
+                    return
                 else:
                     try:
                         num = int(argv[i])
