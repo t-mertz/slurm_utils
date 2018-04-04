@@ -785,15 +785,17 @@ class Submitter(ParameterIterator, JobDB):
         # get directory name
         dirname = self.get_dirname(cur_p, job_idx)
 
-        # create directory if it doesn't exist
+        # create directory if it doesn't exist, returns True if directory existed
         retval = util.assert_dir(dirname)
 
         # else if settings.get('overwrite')
-        if not retval or self._settings.get('overwrite'):
+        if (not retval) or self._settings.get('overwrite_dir'):
 
             # if settings.get('submit_as') is 'sbatch'
             if self._settings.get('submit_as') == 'sbatch':
                 retval, message = self.submit_sbatch(dirname, cur_p)
+            else:
+                raise NotImplementedError
             
             if retval:
                 self._job_count.success()
