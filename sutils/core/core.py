@@ -568,6 +568,10 @@ class Submitter(ParameterIterator, JobDB):
             # call base class constructors
             JobDB.__init__(self)
             ParameterIterator.__init__(self)
+            self.process_input(argv)  # this needs to be repeated since the base constructor
+                                      # above resets _supdate to None.
+                                      # maybe separate mode determination and processing input
+                                      # in run mode? Or have process_input() return supdate?
             
             # load the job database
             self._job_db = self.read_job_db()
