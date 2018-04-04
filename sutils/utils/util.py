@@ -146,16 +146,25 @@ def copy_replace(in_path, out_path, pattern, subst):
             with open(out_path, 'w') as output_file:
                 for line in input_file:
                     replace_itms = 0
-                    pattern_itm = pattern[0]
-                    subst_itm = subst[0]
+                    pattern_itm = [pattern[0]]
+                    subst_itm = [subst[0]]
                     for p,s in zip(pattern, subst):
                         if p in line:
                             replace_itms += 1
-                            pattern_itm = p
-                            subst_itm = s
+                            pattern_itm += [p]
+                            subst_itm += [s]
                     if replace_itms > 1:
-                        raise RuntimeError("Warning possible conflict!")
-                    output_file.write(line.replace(pattern_itm, subst_itm))
+                        #raise RuntimeError("Warning possible conflict! File: {}".format(in_path))
+                        # this should be a warning, but even then, it doesn't make much sense as one would
+                        # maybe like to have several input arguments to a program in one line.
+                        # instead there should be a test that shorter patterns are not part of longer patterns
+                        # and if that's the case maybe replace long patterns first.
+
+                        pass
+                    temp_line = line[:]
+                    for p,s in zip(pattern, subst):
+                        temp_line = temp_line.replace(p, s)
+                    output_file.write(temp_line)
 
 def generate_format_spec(num_vals, sep, dtypes, decimals=None, total_digits=3):
     """

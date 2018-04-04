@@ -723,7 +723,7 @@ class Submitter(ParameterIterator, JobDB):
 
         # do the iteration, call execute for every job
         for job_idx, cur_p in enumerate(self._params[first-1:last]):
-            self.log("{}. Submitting job for ".format(first+job_idx) + self._pformat_str.format(*cur_p) + " | indices: " + self._dformatlist_str.format(*self._params.get_inds_per_ax(job_idx)))
+            self.log("{}. Submitting job for ".format(first+job_idx) + self._pformat_str.format(*cur_p) + " | indices: " + self._dformatlist_str.format(*self._params.get_inds_per_ax(first-1+job_idx)))
             self.execute(first-1+job_idx, cur_p)
 
     def get_num_jobs(self, start, num):
