@@ -35,6 +35,7 @@ if len(sys.argv) > 1:
                             'ssubmit  = sutils.bin.submit.__main__:main',
                             'scancels = sutils.bin.cancel.__main__:main',
                             'sstatus  = sutils.bin.status.__main__:main',
+                            'slsconfig  = sutils.bin.lsconfig.__main__:main',
                 ],
             },
         )

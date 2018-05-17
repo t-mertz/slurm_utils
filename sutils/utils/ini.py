@@ -105,6 +105,8 @@ def parameters_from_ini(path):
                 d.update({'use_index': str2bool(d['use_index']),})
             if 'test_mode' in d:
                 d['test_mode'] = str2bool(d['test_mode'])
+            if 'overwrite_dir' in d:
+                d['overwrite_dir'] = str2bool(d['overwrite_dir'])
         elif d['name'].lower() == 'pconfig':
             pcfg = d # create a local copy of the parameter settings dictionary
             pcfg.pop('name') # remove name key
