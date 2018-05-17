@@ -20,7 +20,8 @@ if int(PY_VER[0]) < 3:
 
 VERSION_MAJOR = 0
 VERSION_MINOR = 2
-VERSION = "{}.{}".format(VERSION_MAJOR, VERSION_MINOR)
+VERSION_PATCH = 0
+VERSION = "{}.{}.{}".format(VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)
 AUTHOR = "Thomas Mertz"
 COPYRIGHT_YEARS = sorted([2016, 2018])
 COPYRIGHT_RANGE = "{}-{}".format(COPYRIGHT_YEARS[0], COPYRIGHT_YEARS[-1])
@@ -796,7 +797,7 @@ class Submitter(ParameterIterator, JobDB):
                 retval, message = self.submit_sbatch(dirname, cur_p)
             else:
                 raise NotImplementedError
-            
+ 
             if retval:
                 self._job_count.success()
 
@@ -807,7 +808,7 @@ class Submitter(ParameterIterator, JobDB):
                 self.log("> Submission succeeded. ({})\n".format(message))
             else:
                 self._job_count.failed()
-            
+
                 self.log("> Submission failed. ({})\n".format(message))
         else:
             self.log("> Directory existed and overwrite is disabled. Skipping this value.\n")
