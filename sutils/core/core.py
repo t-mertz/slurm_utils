@@ -1337,3 +1337,5 @@ def main(mode, *argv):
             ssub_iter.finalize()
     except NotImplementedError as e:
         print("ERROR: Method {} not implemented.".format(str(e)))
+    except Exception as e:
+        print("An error occured: " + str(e))
