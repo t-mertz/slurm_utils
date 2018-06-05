@@ -716,7 +716,7 @@ class Submitter(ParameterIterator, JobDB):
         changed_num, num = self.get_num_jobs(first, self._settings.get('num_submits'))
         if changed_num:
             last = first + num - 1
-            self.log("INFO: Number of jobs specified ({}) larger than total number of jobs ({}). Overriding.\n".format(self._settings.get('num_submits'), self._params.get_maxnum() + 1))
+            self.log("INFO: Highest specified job out of range ({}/{}). Overriding.\n".format(first+self._settings.get('num_submits')-1, self._params.get_maxnum()))
             self._settings.update([['num_submits', num]])
         
         # log number of jobs to submit 
