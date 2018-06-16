@@ -229,3 +229,13 @@ def str2list(s):
 def str2bool(s):
     """Convert string to bool."""
     return s.strip().lower() == "true"
+
+def make_ini_file(lst, dest):
+    """Save `lst` as an ini file to `dest`."""
+    with open(dest, "w") as outfile:
+        for grp in lst:
+            outfile.write("[{}]".format(grp.name), end="\n")
+            for opt in grp.members:
+                outfile.write("{} = {} {}".format(opt.name, opt.default_value, opt.description), end="\n")
+            outfile.write("\n")
+        
