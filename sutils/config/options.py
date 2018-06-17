@@ -4,7 +4,12 @@ This file is part of sutils
 Implements configuration options.
 """
 import exceptions
+import warnings
 
+warnings.warn(
+    "Module options is deprecated. Use configoptions instead",
+    DeprecationWarning
+)
 
 GROUPS_ = {
     'general': GeneralGroup,
