@@ -21,8 +21,8 @@ if len(sys.argv) > 1:
             name=NAME,
             version=VERSION,
             author='Thomas Mertz',
-            url='http://www.thomasmertz.eu',
-            license='GNU GPL',
+            url='https://github.com/t-mertz/slurm_utils',
+            license='MIT',
             #py_modules=['core', 'parameters', 'ini', 'common', 'util', 
             #        'runscancels', 'runstatus', 'runsubmit', 'scancel'],
             #data_files=[('config', 'config.ini'),]

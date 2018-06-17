@@ -44,7 +44,10 @@ class ShellProcessor(core.ParameterIterator):
 
     def process(self, dirname, job_idx, plist):
         # maybe copy the script file to a temporary file in the job_directory
-        subprocess.Popen(['bash', self._script_name]) 
+        p = subprocess.Popen(['bash', self._script_name], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        p.wait()
+        sys.stdout.write(p.stdout)
+        sys.stderr.write(p.stderr)
 
 class ExternalProcessor(core.ParameterIterator):
     """Run external program on data."""

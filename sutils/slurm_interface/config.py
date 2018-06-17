@@ -1,7 +1,62 @@
-from ..util import ini
+from ..utils import ini
 import re as regexpr
+from ..configparse import cfgtypes
 
 PREFIX = "#SBATCH --" # this prefix marks SBATCH settings
+
+
+# time type
+class TimeType(cfgtypes.Type):
+    def __init__(self, string):
+        super(TimeType, self).__init__(string)
+        self._value = check_time(string)
+
+
+def try_int(val):
+    """Tries to convert val to int.
+
+    Raises ValueError upon failure.
+    In contrast to builtin.int this function returns 0 for an empty string.
+    """
+    try:
+        return int(val)
+    except ValueError:
+        if len(val) == 0:
+            return 0
+        else:
+            raise ValueError("Cannot convert to integer: {}".format(val))
+
+
+def check_time(string):
+    """Valid entries are 'minutes', 'minutes:seconds', 'hours:minutes:seconds",
+    "days-hours:minutes:seconds".
+    """
+    days, hours, minutes, seconds = 0, 0, 0, 0
+
+    if '-' in self._value:
+        tmp = self._value.split('-')
+        days = try_int(tmp[0])
+        tmp = tmp[1].split(':') 
+    else:
+        tmp = self._value.split(':')
+
+    if len(tmp) == 1:
+        hours = try_int(tmp[0])
+    elif len(tmp) == 2:
+        hours, minutes = try_int(tmp[0]), try_int(tmp[1])
+    elif len(tmp) == 3:
+        hours, minutes, seconds = try_int(tmp[0]), try_int(tmp[1]), try_int(tmp[2])
+
+
+    value = "{days:d}-:{hours:02d}:{minutes:02d}:{seconds:02d}".format(days=days,
+                                                                    hours=hours,
+                                                                    minutes=minutes,
+                                                                    seconds=seconds)
+    return value
+
+def settings2str(settings):
+    """Create a string out of settings, which can be inserted in the beginning of a bash script."""
+    raise NotImplementedError
 
 def SBATCH_Config(object):
     """Simple data type that holds a dict data member and has a to_str() method."""
