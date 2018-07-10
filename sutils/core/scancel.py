@@ -2,6 +2,7 @@ import subprocess
 import sys
 import os
 import pwd
+import getpass
 
 CATCH_EXCEPTIONS = True
 
@@ -59,7 +60,8 @@ def cancel(mode, num):
         subprocess.call(["scancel", str(num)])
     
     else:
-        username = pwd.getpwuid(os.getuid())[0]
+        #username = pwd.getpwuid(os.getuid())[0]
+        username = getpass.getuser()
 
         args = "squeue | grep {}".format(username)
         args = "squeue -u {}".format(username)

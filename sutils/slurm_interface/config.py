@@ -33,12 +33,12 @@ def check_time(string):
     """
     days, hours, minutes, seconds = 0, 0, 0, 0
 
-    if '-' in self._value:
-        tmp = self._value.split('-')
+    if '-' in string:
+        tmp = string.split('-')
         days = try_int(tmp[0])
         tmp = tmp[1].split(':') 
     else:
-        tmp = self._value.split(':')
+        tmp = string.split(':')
 
     if len(tmp) == 1:
         hours = try_int(tmp[0])
@@ -83,14 +83,20 @@ def SBATCH_Config(object):
 
     def to_str(self):
         """Convert configuration to string, which can be written in bash scripts."""
+        pass
         
 
     def __str__(self):
         return self.to_str()
 
 
-class SBATCH_Option(object):
+class SLURM_Option(object):
+    pass
+
+class SBATCH_Option(SLURM_Option):
     """A single SBATCH option, which can check validity and convert to a string."""
+    name = ""
+    _valid = False
     def __init__(self, value_str):
         self._value = value_str.strip()
         if self._value == "":
@@ -151,3 +157,62 @@ class SBATCH_partition(SBATCH_Option):
     name = "partition"
     def parse(self):
         self._valid = True
+
+
+class ToggleOption(SLURM_Option):
+    _value = False
+    _option = ""
+    def __init__(self, value):
+        self._value = bool(value)
+    
+    def get(self):
+        if self._value:
+            return [self._option]
+        return []
+
+class ArgOption(SLURM_Option):
+    _value = None
+    _option = ""
+    def __init__(self, value=None):
+        self._value = value
+    
+    def get(self):
+        if self._value is not None:
+            return [self._option, self._value]
+        else:
+            return []
+
+class Scancel_job_id(ArgOption):
+    pass
+
+class ArgumentList(object):
+    _args = []
+    def to_list(self):
+        return self._args
+
+class Scancel_Options(ArgumentList):
+    settings = {
+        'job_id' : '',
+    }
+
+    def __init__(self, job_id):
+        self._args = []
+        self._args += Scancel_job_id(job_id).get()
+
+
+class Squeue_user(ArgOption):
+    _option = "--user"
+
+class Squeue_noheader(ToggleOption):
+    _option = "--noheader"
+
+class Squeue_Options(ArgumentList):
+    settings = {
+        'username'  : '--user',
+        'noheader'  : '--noheader',
+    }
+
+    def __init__(self, userid=None, noheader=False):
+        self._args = []
+        self._args += Squeue_user(userid).get()
+        self._args += Squeue_noheader(noheader).get()
