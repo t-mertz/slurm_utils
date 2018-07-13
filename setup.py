@@ -14,7 +14,7 @@ except ImportError:
 """
 
 NAME = 'sutils'
-VERSION = '0.2.dev1'
+VERSION = '0.2.1'
 if len(sys.argv) > 1:
     if sys.argv[1].strip() != "uninstall":
         setup(
@@ -27,15 +27,17 @@ if len(sys.argv) > 1:
             #        'runscancels', 'runstatus', 'runsubmit', 'scancel'],
             #data_files=[('config', 'config.ini'),]
             packages=setuptools.find_packages('.'),
-            install_requires='numpy',
+            install_requires='numpy', # add mpi4py,urwid
             package_data={
-                 'sutils.config' : ['config.ini'],
+                 'sutils.config' : ['config.ini'], # this can be removed in the future
             },
             entry_points={'console_scripts': [
                             'ssubmit  = sutils.bin.submit.__main__:main',
                             'scancels = sutils.bin.cancel.__main__:main',
                             'sstatus  = sutils.bin.status.__main__:main',
-                            'slsconfig  = sutils.bin.lsconfig.__main__:main',
+                            'slsconfig = sutils.bin.lsconfig.__main__:main',
+                            'sprocess = sutils.bin.process.__main__:main',
+                            'sconfig  = sutils.bin.config.__main__:main',
                 ],
             },
         )

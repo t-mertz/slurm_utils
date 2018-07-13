@@ -1,4 +1,4 @@
-import unitest
+import unittest
 from .. import config
 
 

@@ -18,4 +18,4 @@ def step_range(lo, hi, step):
     if is_int(lo) and is_int(hi) and is_int(step):
         return np.arange(lo, hi+step, step, dtype=int)
     else:
-        return np.arange(lo, hi+step, step, dtype=int)
+        return np.arange(lo, hi+step, step)

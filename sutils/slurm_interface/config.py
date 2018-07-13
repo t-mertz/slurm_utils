@@ -165,7 +165,7 @@ class ToggleOption(SLURM_Option):
     def __init__(self, value):
         self._value = bool(value)
     
-    def get(self):
+    def parse(self):
         if self._value:
             return [self._option]
         return []
@@ -175,9 +175,14 @@ class ArgOption(SLURM_Option):
     _option = ""
     def __init__(self, value=None):
         self._value = value
+
+    def _convert(self):
+        """Can be overridden to perform conversion to str."""
+        pass
     
-    def get(self):
+    def parse(self):
         if self._value is not None:
+            self._convert()
             return [self._option, self._value]
         else:
             return []
@@ -187,6 +192,12 @@ class Scancel_job_id(ArgOption):
 
 class ArgumentList(object):
     _args = []
+#    _arg_info = {}
+#    def add_argument(self, name, cmd_arg, type):
+#        """Add an argument to the known arguments."""
+#        self._arg_info[name] = [cmd_arg, type]
+#        return self
+
     def to_list(self):
         return self._args
 
@@ -197,7 +208,7 @@ class Scancel_Options(ArgumentList):
 
     def __init__(self, job_id):
         self._args = []
-        self._args += Scancel_job_id(job_id).get()
+        self._args += Scancel_job_id(job_id).parse()
 
 
 class Squeue_user(ArgOption):
@@ -214,5 +225,70 @@ class Squeue_Options(ArgumentList):
 
     def __init__(self, userid=None, noheader=False):
         self._args = []
-        self._args += Squeue_user(userid).get()
-        self._args += Squeue_noheader(noheader).get()
+        self._args += Squeue_user(userid).parse()
+        self._args += Squeue_noheader(noheader).parse()
+
+#squeue_options = ArgumentList().add_argument('username', '--user', str) \
+#                               .add_argument('noheader', '--noheader', bool)
+
+class Sbatch_Options(ArgumentList):
+    settings = {
+        'work_dir'   : '--workdir',
+    }
+
+    def __init__(self, work_dir):
+        self._args = []
+        self._args += "{} {}".format(self.settings['work_dir'], work_dir)
+
+
+# this is the most recent interface
+
+class SbatchConfig(ArgumentList):
+    """Container for sbatch configuration."""
+    class Workdir(ArgOption):
+        _option = "--workdir"
+    
+    def __init__(self, work_dir):
+        cls = self.__class__
+        self._args = []
+        self._args += cls.Workdir(work_dir).parse()
+
+class ScancelConfig(ArgumentList):
+    """Container for scancel configuration."""
+    pass
+
+class SqueueConfig(ArgumentList):
+    """Container for squeue configuration."""
+
+    class Noheader(ToggleOption):
+        _option = "--noheader"
+    
+    class User(ArgOption):
+        _option = "--user"
+
+    class Jobs(ArgOption):
+        _option = "--jobs"
+        def convert(self):
+            """Make sure that _value is a string of comma separated IDs."""
+            tmp = [str(i) for i in list(self._value)]
+            self._value = ",".join(tmp)
+    
+    class Format(ArgOption):
+        _option = "--Format"
+
+    class Sort(ArgOption):
+        _option = "--sort"
+    
+    class States(ArgOption):
+        _option = "--states"
+
+    def __init__(self, jobs=None, userid=None, noheader=False, format=None, sort=None, states=None):
+        cls = self.__class__
+        self._args = []
+        self._args += cls.User(userid).parse()
+        self._args += cls.Noheader(noheader).parse()
+        self._args += cls.Jobs(jobs).parse()
+        self._args += cls.Format(format).parse()
+        self._args += cls.Sort(sort).parse()
+        self._args += cls.States(states).parse()
+

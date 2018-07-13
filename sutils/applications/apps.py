@@ -3,4 +3,6 @@ INSTALLED_APPS = {
     'SCANCELS'  :   'CANCEL',
     'SCONFIG'   :   'CONFIG',
     'SSTATUS'   :   'STATUS',
+    'SLSCONFIG' :   'LSCONFIG',
+    'SPROCESS'  :   'PROCESS',
 }

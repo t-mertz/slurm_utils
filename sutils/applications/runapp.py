@@ -2,10 +2,12 @@ import importlib
 import sys
 import os
 
-from ..applications import apps
+from . import apps
 
-def run_application():
-    app_name = os.path.basename(sys.argv[0])
+def run_application(app_name=None):
+    if app_name is None:
+        app_name = os.path.basename(sys.argv[0])
+    
     try:
         pckg_name = apps.INSTALLED_APPS[app_name.upper()].lower()
     except KeyError:

@@ -121,6 +121,8 @@ class ConfigParser(object):
                 for option, value in group.items():
                     if (option != 'name') and (option in cur_group):
                         output[groupname][option] = cur_group[option].parse(value)
+                    else:
+                        raise RuntimeError("Unknown option: {}".format(option))
 
         # go through everything again and add required defaults
         for groupname, group in self._groups.items():

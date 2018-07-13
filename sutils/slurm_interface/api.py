@@ -16,8 +16,11 @@ def run_command(cmd, args):
 
     return retval, stdout, stderr
 
-def sbatch(args):
-    retval, stdout, stderr = run_command('sbatch', args)
+def sbatch(work_dir, *args):
+    named_args = config.SbatchConfig(work_dir=work_dir).to_list()
+    named_args += args # this is to support extra arguments. No guarantee!
+
+    retval, stdout, stderr = run_command('sbatch', named_args)
     return retval, stdout
 
 def scancel(job_id):

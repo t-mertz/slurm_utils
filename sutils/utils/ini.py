@@ -334,7 +334,7 @@ def split_vector_sequence(s):
             pass
         else:
             if dim != len(vs):
-                raise InputError("Not all vectors have the same dimension!")
+                raise ValueError("Not all vectors have the same dimension!")
         vec_list.append(np.array([float(val) for val in vs]))
     
     return vec_list
