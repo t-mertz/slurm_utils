@@ -1,5 +1,5 @@
-from ...utils.argparse import ArgumentParser
+from ...utils.argparse_wrap import ArgumentParser
 
 parser = ArgumentParser(description="Run configuration list program.") \
-            .add_argument('-p', '--params', nargs='?', type=str, help='Display parameter information.', const='all', default=False)
+            .add_argument('-p', '--params', nargs='?', type=str, help='Display parameter information.', const=False, default=None)
 

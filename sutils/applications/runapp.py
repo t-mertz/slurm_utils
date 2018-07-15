@@ -14,9 +14,9 @@ def run_application(app_name=None):
         print("Unexpected error: Program {} unknown.".format(app_name))
         sys.exit(1)
 
-    app_module = importlib.import_module(pckg_name, package='..applications.'+pckg_name)
-    app_pckg = importlib.import_module(pckg_name, package='..applications')
+    app_module = importlib.import_module('sutils.applications.{}.{}'.format(pckg_name, pckg_name))
+    app_pckg = importlib.import_module('sutils.applications.'+pckg_name)
 
-    options = app_pckg.options.parser.parse_args(sys.argv[1:])
+    options = vars(app_pckg.options.parser.parse_args(sys.argv[1:]))
 
     app_module.run(options)

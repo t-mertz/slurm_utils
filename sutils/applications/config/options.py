@@ -1,5 +1,5 @@
-from ...utils.argparse import ArgumentParser
+from ...utils.argparse_wrap import ArgumentParser
 
 parser = ArgumentParser(description="Run configuration program.") \
-            .add_argument('-c', '--create', metavar='filename', nargs=1, type=str, help='Create new default configuration file.') 
+            .add_argument('-c', '--create', metavar='filename', type=str, help='Create new default configuration file.') 
 

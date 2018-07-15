@@ -24,7 +24,7 @@ def get_parameter_info(parameter_name=None):
     params, settings = get_config()
     names = params.get_names()
 
-    if parameter_name is None:
+    if parameter_name == None:
         # all
         value_format = " | ".join(["{:3d} - {:10}"]*len(names))
         name_format = " | ".join(["{:16}"]*len(names))
