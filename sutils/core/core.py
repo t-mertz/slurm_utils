@@ -328,7 +328,7 @@ class ParameterIterator(object):
         plist = []
 
 
-        ax_names = self._params.get_names.get_names()
+        ax_names = self._params.get_names()
 
         valuestr_list = dirname.strip().split("_")
         for i, p in enumerate(ax_names):
@@ -1056,7 +1056,7 @@ class StatusChecker(ParameterIterator, JobDB):
             if slurm_status.lower() == 'cancelled':
                 self._job_count.cancelled()
             elif slurm_status.lower() == 'failed':
-                self._job_count.fail()
+                self._job_count.failed()
             elif slurm_status.lower() == 'running':
                 self._job_count.running()
             elif slurm_status.lower() == 'pending':
@@ -1319,7 +1319,7 @@ def get_wildcard_list(params):
 
     return wildcard_list
 
-def version():
+def get_version():
     return VERSION
 
 def main(mode, *argv):
