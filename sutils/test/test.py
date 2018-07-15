@@ -6,6 +6,7 @@ def set_testmode(val):
     """Enable/disable testmode. This will catch all system calls and instead
     produce debug output that is suitable for tests.
     """
+    global TESTMODE
     TESTMODE = bool(val)
 
 loader = TestLoader()
