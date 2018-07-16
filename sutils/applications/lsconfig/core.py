@@ -26,18 +26,23 @@ def get_parameter_info(parameter_name=None):
 
     if parameter_name == None:
         # all
-        value_format = " | ".join(["{:3d} - {:10}"]*len(names))
-        name_format = " | ".join(["{:16}"]*len(names))
+#        value_format = " | ".join(["{:3d} - {:10}"]*len(names))
+        value_format = "{:3d} - {:10}"
+        empty_format = " "*16
+        name_format = " | ".join(["{:^16}"]*len(names))
         values = [params.get_values_ax(n) for n in names]
         print(name_format.format(*names))
+        print("-|-".join(["-"*16]*len(names)))
         dims = [len(v) for v in values]
         for i in range(max(dims)):
-            cur_vals = [v[i] if i < dims[ind] else "" for ind,v in enumerate(values)]
-            line_values = []
-            for v in cur_vals:
-                line_values.append(i)
-                line_values.append(v)
-            print(value_format.format(*line_values))
+#            cur_vals = [v[i] if i < dims[ind] else "" for ind,v in enumerate(values)]
+#            line_values = []
+#            for v in cur_vals:
+#                line_values.append(i)
+#                line_values.append(v)
+#            print(value_format.format(*line_values))
+            line_strings = [value_format.format(i, v[i]) if i < dims[ind] else empty_format for ind,v in enumerate(values)]
+            print(" | ".join(line_strings))
         print("Total number: {}".format(np.prod(dims)))
     else:
         try:

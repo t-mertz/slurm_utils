@@ -23,3 +23,14 @@ class ArgumentParser(Parser):
     
     def parse_args(self, *args, **kwargs):
         return self._parser.parse_args(*args, **kwargs)
+    
+    def add_mutually_exclusive_group(self):
+        return ArgumentGroup(self._parser.add_mutually_exclusive_group())
+    
+class ArgumentGroup(object):
+    def __init__(self, group):
+        self._group = group
+    
+    def add_argument(self, *args, **kwargs):
+        self._group.add_argument(*args, **kwargs)
+        return self
