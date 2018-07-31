@@ -2,6 +2,7 @@
 
 Here we define types for configparse
 """
+import os
 
 # types
 
@@ -47,18 +48,18 @@ class RealType(Type):
 
 class NumericType(Type):
     """This numeric type tries to cast to (in this order): int, float, complex"""
-    def __init__(self, str):
-        super(NumericType, self).__init__(str)
+    def __init__(self, string):
+        super(NumericType, self).__init__(string)
         try:
-            self._value = int(str)
+            self._value = int(string)
         except ValueError:
             try:
-                self._value = float(str)
+                self._value = float(string)
             except ValueError:
                 try:
-                    self._value = complex(str)
+                    self._value = complex(string)
                 except ValueError:
-                    raise ValueError("Cannot cast {} to numeric.".format(str))
+                    raise ValueError("Cannot cast {} to numeric.".format(string))
 
 class StringType(Type):
     """String"""
@@ -68,15 +69,15 @@ class StringType(Type):
 
 class BoolType(Type):
     """Boolean"""
-    def __init__(self, str):
-        super(BoolType, self).__init__(str)
-        self._value = str.lower() in ['true', '1']
+    def __init__(self, string):
+        super(BoolType, self).__init__(string)
+        self._value = string.lower() in ['true', '1']
 
 class PathType(Type):
     """Path as a string"""
-    def __init__(self, str):
-        super(IntType, self).__init__(str)
-        self._value = os.path.normpath(os.path.normcase(str))
+    def __init__(self, string):
+        super(PathType, self).__init__(string)
+        self._value = os.path.normpath(os.path.normcase(string))
 
 
 class ListType(Type):

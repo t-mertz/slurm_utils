@@ -25,7 +25,7 @@ pconfig_group = configparse.ConfigGroup('pconfig') \
 # these are settings for SBATCH
 # NOTE these should probably defined in slurm_interface.config
 slurm_group = configparse.ConfigGroup('sbatch') \
-                .add_option('manual', cfgtypes.IntType, True) \
+                .add_option('manual', cfgtypes.BoolType, True) \
                 .add_option('partition', cfgtypes.StringType, 'test') \
                 .add_option('time', SlurmTimeType, '0-00:05:00') \
                 .add_option('ntasks', cfgtypes.IntType, 1) \
