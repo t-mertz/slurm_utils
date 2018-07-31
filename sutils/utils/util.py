@@ -3,6 +3,7 @@ import numpy as np
 import math
 import os
 import sys
+import shutil
 
 def assert_dir(path):
     """
@@ -171,6 +172,40 @@ def copy_replace(in_path, out_path, pattern, subst):
                     for p,s in zip(pattern, subst):
                         temp_line = temp_line.replace(p, s)
                     output_file.write(temp_line)
+
+def has_bash_info(filename):
+    """Check if a file can be executed with bash.
+    
+    This basically checks if the first line contains #!/bin/bash or #!/bin/sh.
+    """
+    with open(filename, 'r') as infile:
+        first_line = infile.readline()
+
+    return first_line.strip() in ["#!/bin/bash", "#!/bin/sh"]
+
+def insert_in_file(filename, string, line=0, force_newline=True):
+    """Insert :string: in file in :line:.
+    Returns :True: if insertion was successful. This could fail if line number
+    is smaller than the number of lines in the file.
+    """
+    if force_newline:
+        if string.endswith('\n'):
+            pass
+        else:
+            string += "\n"
+    
+    written = False
+    tmp_filename = funiquename('tmp', '.sh')
+    with open(filename, 'r') as infile:
+        with open(tmp_filename, 'w') as outfile:
+            for lineno,line in enumerate(infile):
+                if lineno == line:
+                    outfile.write(string)
+                    written = True
+                outfile.write(line)
+    shutil.move(tmp_filename, filename)
+    return written
+
 
 def generate_format_spec(num_vals, sep, dtypes, decimals=None, total_digits=3):
     """
@@ -372,3 +407,19 @@ def get_cmd_args(argv):
 def is_python3():
     """Check if interpreter runs Python 3 or higher."""
     return sys.version_info > 2
+
+def to_list(val):
+    """Convert anything to a list.
+    
+    If :val: is iterable just return list(val), else return [val].
+    """
+    return list(val) if isiterable(val) else [val]
+
+def srange(start, stop=None, step=1):
+    """Same as builtin :range:, but returns strings instead of integers."""
+    if stop is None:
+        stop = start
+        start = 0
+
+    for i in range(start, stop, step):
+        yield str(i)

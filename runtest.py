@@ -3,4 +3,5 @@ from unittest import TextTestRunner
 
 
 if __name__ == "__main__":
-    TextTestRunner().run(test.suite)
+    test.set_testmode(True)
+    TextTestRunner(buffer=True).run(test.suite)

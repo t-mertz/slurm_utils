@@ -245,12 +245,94 @@ class Sbatch_Options(ArgumentList):
 
 class SbatchConfig(ArgumentList):
     """Container for sbatch configuration."""
+    class Begin(ArgOption):
+        _option = "--begin"
+    
+    class Constraint(ArgOption):
+        _option = "--contraint"
+    
+    class CpusPerTask(ArgOption):
+        _option = "--cpus-per-task"
+    
+    class Error(ArgOption):
+        _option = "--error"
+    
+    class Jobname(ArgOption):
+        _option = "--job-name"
+    
+    class Mailtype(ArgOption):
+        _option = "--mail-type"
+    
+    class Mem(ArgOption):
+        _option = "--mem"
+
+    class MemPerCpu(ArgOption):
+        _option = "--mem-per-cpu"
+
+    class Mincpus(ArgOption):
+        _option = "--mincpus"
+    
+    class Nodes(ArgOption):
+        _option = "--nodes"
+    
+    class Ntasks(ArgOption):
+        _option = "--ntasks"
+    
+    class Output(ArgOption):
+        _option = "--output"
+    
+    class Partition(ArgOption):
+        _option = "--partition"
+    
+    class Time(ArgOption):
+        _option = "--time"
+
     class Workdir(ArgOption):
         _option = "--workdir"
     
-    def __init__(self, work_dir):
+    def __init__(self, begin=None, constraint=None, cpus_per_task=None, error=None,
+                 job_name=None, mail_type=None, mem=None, mem_per_cpu=None,
+                 mincpus=None, nodes=None, ntasks=None, output=None, partition=None,
+                 time=None, work_dir=None):
+        """Container for sbatch configuration.
+
+        Options are:
+        begin           - time when to begin
+        constraint      - e.g. gpu
+        cpus_per_task   - min. CPUs per task on one node (use for shared memory applications)
+        error           - filename where stderr is written to
+        job_name        - name of the job
+        mail_type       - which mails are to be sent (BEGIN,END,FAIL)
+        mem             - memory per node (MB)
+        mem_per_cpu     - memory required per CPU (MB). overrides :mem:
+        mincpus         - minimum number of CPUs per node
+        nodes           - minimum number of nodes
+        ntasks          - number of tasks that will be launched. It is expected
+                          that tasks can be run on different nodes. (use for
+                          distributed memory applications)
+        output          - filename where stdout is written to
+        partition       - request SLURM partition py name
+        time            - maximum runtime of the job
+        work_dir        - working directory of the submit script
+
+        For more information on these options visit the sbatch man pages.
+        """
         cls = self.__class__
         self._args = []
+        self._args += cls.Begin(begin).parse()
+        self._args += cls.Constraint(constraint).parse()
+        self._args += cls.CpusPerTask(cpus_per_task).parse()
+        self._args += cls.Error(error).parse()
+        self._args += cls.Jobname(job_name).parse()
+        self._args += cls.Mailtype(mail_type).parse()
+        self._args += cls.Mem(mem).parse()
+        self._args += cls.MemPerCpu(mem_per_cpu).parse()
+        self._args += cls.Mincpus(mincpus).parse()
+        self._args += cls.Nodes(nodes).parse()
+        self._args += cls.Ntasks(ntasks).parse()
+        self._args += cls.Output(output).parse()
+        self._args += cls.Partition(partition).parse()
+        self._args += cls.Time(time).parse()
         self._args += cls.Workdir(work_dir).parse()
 
 class ScancelConfig(ArgumentList):
@@ -292,3 +374,4 @@ class SqueueConfig(ArgumentList):
         self._args += cls.Sort(sort).parse()
         self._args += cls.States(states).parse()
 
+    

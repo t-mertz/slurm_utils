@@ -1,7 +1,7 @@
 import unittest
 
-import configparse
-import cfgtypes
+from . import configparse
+from . import cfgtypes
 
 
 class TestIntType(unittest.TestCase):

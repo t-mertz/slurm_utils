@@ -5,7 +5,7 @@ import sys
 import os
 
 from ..core import core
-import fargs
+from . import fargs
 
 def process_py(func):
     try:

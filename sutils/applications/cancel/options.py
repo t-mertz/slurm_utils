@@ -18,6 +18,7 @@ parser = ArgumentParser(description="Cancel SLURM jobs of current user.")
 parser.add_mutually_exclusive_group() \
             .add_argument('-l', '--last', metavar='N', nargs=1, type=int, help='Cancel the last N jobs.') \
             .add_argument('-f', '--first', metavar='N', nargs=1, type=int, help='Cancel the first N jobs.') \
-            .add_argument('-a', '--all', nargs=0, help='Cancel all jobs.')
+            .add_argument('-a', '--all', nargs=0, help='Cancel all jobs.') \
+            .add_argument('-F', '--force', nargs=0, help='Force immediate cancellation of all jobs. Faster but cannot be aborted.')
 
 #parser.parse_args(args)
