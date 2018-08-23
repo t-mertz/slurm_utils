@@ -14,7 +14,7 @@ except ImportError:
 """
 
 NAME = 'sutils'
-VERSION = '0.2.1'
+VERSION = '0.2.2'
 if len(sys.argv) > 1:
     if sys.argv[1].strip() != "uninstall":
         setup(
