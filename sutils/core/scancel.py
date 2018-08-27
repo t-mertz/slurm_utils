@@ -84,7 +84,7 @@ def cancel(mode, num):
             sys.exit(0)
 
         if mode == "last":
-            if num > njobs:
+            if num >= njobs:
                 minn = None
             else:
                 minn = max(-1, njobs-1 - num)
