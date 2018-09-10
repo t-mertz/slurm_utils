@@ -29,6 +29,8 @@ import os
 PY_VERSION = sys.version
 if int(PY_VERSION[0]) < 3:
     import exceptions
+from collections import OrderedDict
+
 import numpy as np
 from . import parameters
 from . import util
@@ -81,7 +83,7 @@ def ini2dict(path):
     """Read ini file and output attributes in a dictionary.
     Each key will refer to one section, which is stored in its own dictionary as the value.
     """
-    data = dict()
+    data = OrderedDict()
     cur_section = None
     with open(path, 'r') as ini_file:
         for line_number,line in enumerate(ini_file):

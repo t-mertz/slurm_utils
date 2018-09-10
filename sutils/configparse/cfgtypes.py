@@ -97,7 +97,7 @@ class ListType(Type):
             raise TypeError("Input must be string or list.")
         
         for i, item in enumerate(str_list):
-            str_list[i] = element_t(item).value()
+            str_list[i] = element_t(item.strip()).value()
 
         self._value = str_list
 
@@ -108,8 +108,8 @@ class StringListType(ListType):
 
 class IntListType(ListType):
     def __init__(self, str):
-        super(StringListType, self).__init__(IntType, str)
+        super(IntListType, self).__init__(IntType, str)
 
 class BoolListType(ListType):
     def __init__(self, str):
-        super(StringListType, self).__init__(BoolType, str)
+        super(BoolListType, self).__init__(BoolType, str)

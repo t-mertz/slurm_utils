@@ -1,4 +1,4 @@
-"""read_config.py
+"""iniconfig.py
 
 Implements reading the config file.
 """
@@ -6,11 +6,15 @@ Implements reading the config file.
 from ..utils import ini
 from .configoptions import parser as config_parser
 from ..configparse.configparse import get_description_dict, get_default_dict
+from . import parameterconfig
 
 
 def read(path):
     config_dict = ini.ini2dict(path)
+    parameter_defs = parameterconfig.split_parameters(config_dict)  # parameters need to be ignored by config parser
     parsed_config = config_parser.parse_config(config_dict)
+    parsed_config['parameters'] = parameter_defs                    # adding parameters
+    parameterconfig.parse_parameters(parsed_config)                 # this changes parsed_config inplace!
 
     return parsed_config
 

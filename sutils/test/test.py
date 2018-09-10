@@ -35,6 +35,8 @@ class StringBuffer(object):
 
 cmd_buffer = StringBuffer(force_newline=True)
 
-loader = TestLoader()
+def get_suite():
+    loader = TestLoader()
 
-suite = loader.discover(".", pattern='test*.py', top_level_dir=".")
+    suite = loader.discover(".", pattern='test*.py', top_level_dir=".")
+    return suite

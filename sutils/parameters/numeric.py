@@ -10,7 +10,7 @@ def points_range(lo, hi, num):
     return np.linspace(lo, hi, num)
 
 def step_range(lo, hi, step):
-    """Returns a range from :lo: to :hi: in steps of :step:.
+    """Returns a range from :lo: to :hi: in steps of :step:. :hi: is always included.
 
         If :lo:, :hi: and :step: are integers, the range will contain only integers.
         Otherwise the range will contain floats.

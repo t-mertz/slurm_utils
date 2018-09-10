@@ -63,44 +63,54 @@ class TestGroup(unittest.TestCase):
 
 class TestConfigParser(unittest.TestCase):
     def test_single_group(self):
-        group = configparse.ConfigGroup('a').add_option('option1', cfgtypes.IntType, 1)
-        parser = configparse.ConfigParser().add_group(group)
+        group = configparse.ConfigSection('a').add_option('option1', cfgtypes.IntType, 1, required=False)
+        parser = configparse.ConfigParser().add_section(group)
         res = parser.parse_config({'a': {'option1': "1"}})
         self.assertEqual(res['a']['option1'], 1)
 
     def test_single_group_empty_default(self):
-        group = configparse.ConfigGroup('a').add_option('option1', cfgtypes.IntType, 1)
-        parser = configparse.ConfigParser().add_group(group)
+        group = configparse.ConfigSection('a').add_option('option1', cfgtypes.IntType, 1, required=False)
+        parser = configparse.ConfigParser().add_section(group)
         res = parser.parse_config({})
         self.assertEqual(res['a']['option1'], 1)
 
     def test_single_group_default(self):
-        group = configparse.ConfigGroup('a').add_option('option1', cfgtypes.IntType, 1)
-        parser = configparse.ConfigParser().add_group(group)
+        group = configparse.ConfigSection('a').add_option('option1', cfgtypes.IntType, 1, required=False)
+        parser = configparse.ConfigParser().add_section(group)
         res = parser.parse_config({'a': {}})
         self.assertEqual(res['a']['option1'], 1)
 
     def test_single_group_option_required_nodefault(self):
-        group = configparse.ConfigGroup('a').add_option('option1', cfgtypes.IntType, required=True)
-        parser = configparse.ConfigParser().add_group(group)
+        group = configparse.ConfigSection('a').add_option('option1', cfgtypes.IntType, required=True)
+        parser = configparse.ConfigParser().add_section(group)
         self.assertRaises(RuntimeError, parser.parse_config, {'a': {}})
 
-    def test_two_groups_name_collision(self):
-        group1 = configparse.ConfigGroup('a').add_option('option1', cfgtypes.IntType, required=True)
-        group2 = configparse.ConfigGroup('a').add_option('option1', cfgtypes.IntType, required=True)
-        parser = configparse.ConfigParser().add_group(group1)
-        self.assertRaises(RuntimeError, parser.add_group, group2)
+    def test_two_groups_name_collision_raises_runtimerror(self):
+        group1 = configparse.ConfigSection('a').add_option('option1', cfgtypes.IntType, required=True)
+        group2 = configparse.ConfigSection('a').add_option('option1', cfgtypes.IntType, required=True)
+        parser = configparse.ConfigParser().add_section(group1)
+        self.assertRaises(RuntimeError, parser.add_section, group2)
+    
+    def test_unknown_option_raises_runtime_error(self):
+        group = configparse.ConfigSection('a').add_option('option1', cfgtypes.IntType, required=True)
+        parser = configparse.ConfigParser().add_section(group)
+        self.assertRaises(RuntimeError, parser.parse_config, {'a': {'option2': None}})
+
+    def test_unknown_group_raises_runtime_error(self):
+        group = configparse.ConfigSection('a').add_option('option1', cfgtypes.IntType, required=True)
+        parser = configparse.ConfigParser().add_section(group)
+        self.assertRaises(RuntimeError, parser.parse_config, {'b': None})
 
 
 class TestStaticMethods(unittest.TestCase):
     def test_get_description_dict_single(self):
-        group = configparse.ConfigGroup('a').add_option('option1', cfgtypes.IntType, required=True, desc="description_a1")
-        parser = configparse.ConfigParser().add_group(group)
+        group = configparse.ConfigSection('a').add_option('option1', cfgtypes.IntType, required=True, desc="description_a1")
+        parser = configparse.ConfigParser().add_section(group)
         self.assertEqual(configparse.get_description_dict(parser), {'a': {'option1': "description_a1"}})
 
     def test_get_default_dict_single(self):
-        group = configparse.ConfigGroup('a').add_option('option1', cfgtypes.IntType, 1, required=True, desc="description_a1")
-        parser = configparse.ConfigParser().add_group(group)
+        group = configparse.ConfigSection('a').add_option('option1', cfgtypes.IntType, 1, required=True, desc="description_a1")
+        parser = configparse.ConfigParser().add_section(group)
         self.assertEqual(configparse.get_default_dict(parser), {'a': {'option1': 1}})
 
 if __name__ == "__main__":

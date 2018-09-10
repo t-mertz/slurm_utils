@@ -3,13 +3,13 @@
 from __future__ import print_function
 import os
 import sys
-import mpi4py as MPI
+from mpi4py import MPI
 import numpy as np
 
 
-comm = MPI.Comm_World()
-rank = COMM.Get_rank()
-mpi_size = COMM.Get_size()
+COMM = MPI.COMM_WORLD
+RANK = COMM.Get_rank()
+SIZE = COMM.Get_size()
 
 
 # check if current job is an MPI job
@@ -21,7 +21,7 @@ except KeyError:
     HAS_MPI = False
 
     # This may happen if one uses MPICH instead of OpenMPI
-    if mpi_size > 0:
+    if SIZE > 0:
         HAS_MPI = True
 
 
@@ -29,25 +29,21 @@ def get_work_split(work_size):
     """Returns array with sizes of work units per core and
     array with offsets of data.
     """
-    work = np.zeros(work_size)
+    base = work_size // SIZE
+    leftover = work_size % SIZE
 
-    base = work_size // mpi_size
-    leftover = work_size % mpi_size
-
-    sizes = np.ones(mpi_size, dtype=int)*base
+    sizes = np.ones(SIZE, dtype=int)*base
     sizes[:leftover] += 1
-    offsets = np.zeros(mpi_size, dtype=int)
+    offsets = np.zeros(SIZE, dtype=int)
     offsets[1:] = np.cumsum(sizes)[:-1]
 
     return sizes, offsets
 
 
-def print_root(arg, file=None):
-    """Print only in root."""
-    if file is None:
-        file = sys.stdout
-    if rank == 0:
-        print(arg, file=file)
+def print_root(arg, file=sys.stdout, end='\n', flush=False):
+    """Print only in root process."""
+    if RANK == 0:
+        print(arg, file=file, end=end, flush=flush)
 
 class BaseOutFileStream(object):
     def print(self, arg):
@@ -63,7 +59,7 @@ class OutFileStream(BaseOutFileStream):
         self._buffer = []
         self._file = filename
         self._split = split
-        if rank == 0:
+        if RANK == 0:
             # create file or delete contents of file
             with open(filename, 'w'):
                 pass
@@ -84,19 +80,19 @@ class OutFileStream(BaseOutFileStream):
 
     if HAS_MPI:
         def flush(self):
-            buffer = comm.gather(self._buffer, root=0)
-            splits = comm.gather(self._split, root=0)
+            buffer = COMM.gather(self._buffer, root=0)
+            splits = COMM.gather(self._split, root=0)
 
-            if rank == 0:
-                assert len(buffer) == len(split)
+            if RANK == 0:
+                assert len(buffer) == len(splits)
                 sorted_buffer = []*len(buffer)
                 for ind, itm in zip(splits, buffer):
                     sorted_buffer[ind] = itm
                 
                 # here we do the actual printing
-                with open(filename, 'a') as outfile:
+                with open(self._file, 'a') as outfile:
                     for itm in sorted_buffer:
-                        print(itm, file=sorted_buffer)
+                        print(itm, file=outfile)
 
     else:
         def flush(self):
@@ -132,4 +128,7 @@ class OutStreamHandler(BaseOutStreamHandler):
         """Flush all filestreams."""
         for f in self._files:
             f.flush()
+    
+    def __del__(self):
+        self.flush()
             

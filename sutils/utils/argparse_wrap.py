@@ -3,6 +3,8 @@
 
 import argparse
 
+SUPPRESS = argparse.SUPPRESS    # just forward this
+
 class ParserBase(object):
     pass
 

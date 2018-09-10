@@ -27,7 +27,12 @@ if len(sys.argv) > 1:
             #        'runscancels', 'runstatus', 'runsubmit', 'scancel'],
             #data_files=[('config', 'config.ini'),]
             packages=setuptools.find_packages('.'),
-            install_requires='numpy', # add mpi4py,urwid
+            install_requires=['numpy', 
+                              'argparse',
+                              'mpi4py',
+                              #'psycopg2',
+                              #'urwid',
+                             ],# add urwid
             package_data={
                  'sutils.config' : ['config.ini'], # this can be removed in the future
             },
@@ -45,6 +50,14 @@ else:
     sys.exit(0)
 import sys, os
 import site
+
+
+# make sure that the executables can be found
+PATH = os.environ['PATH'].split(':')
+bin_path = os.path.expanduser(os.path.join('~', '.local', 'bin'))
+if bin_path not in PATH:
+    print("\n" + "-"*80)
+    print("Please add %s to PATH." % bin_path)
 
 
 # check if installed flag has been set
