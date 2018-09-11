@@ -132,12 +132,12 @@ def parse_parameters(config):
     """Parse the parameter options read from the ini file."""
     parameters = config['parameters']
     params = []
-    for key, val in parameters:
+    for key, val in parameters.items():
         param_t = get_parameter_type(val)
         params.append(ParameterType(key, construct_parameter(param_t, val).values()))
     
     # construct parameters instance here
-    params = ParametersType(params, mode=config['pconfig']['square'], maxdecimals=config['pconfig']['maxdecimals'])
+    params = ParametersType(params, mode=config['pconfig']['mode'], maxdecimals=config['pconfig']['maxdecimals'])
 
     config['parameters'] = params
 

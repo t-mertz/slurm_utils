@@ -4,62 +4,41 @@ from . import configparse
 from . import cfgtypes
 
 
-class TestIntType(unittest.TestCase):
-    def test_empty(self):
-        self.assertRaises(ValueError, cfgtypes.IntType, "")
-
-    def test_positive(self):
-        self.assertEqual(cfgtypes.IntType("1").value(), 1)
-
-    def test_negative(self):
-        self.assertEqual(cfgtypes.IntType("-1").value(), -1)
-    
-    def test_nonint(self):
-        self.assertRaises(ValueError, cfgtypes.IntType, "1.1")
-
-    def test_nonnumeric(self):
-        self.assertRaises(ValueError, cfgtypes.IntType, "a")
-
-
-class TestBoolType(unittest.TestCase):
-    def test_empty(self):
-        self.assertRaises(ValueError, cfgtypes.BoolType, "")
-    
-    def test_true_upper(self):
-        self.assertEqual(cfgtypes.BoolType("True").value(), True)
-
-    def test_true_lower(self):
-        self.assertEqual(cfgtypes.BoolType("true").value(), True)
-    
-    def test_true_caps(self):
-        self.assertEqual(cfgtypes.BoolType("TRUE").value(), True)
-
-    def test_false_upper(self):
-        self.assertEqual(cfgtypes.BoolType("False").value(), False)
-    
-    def test_false_lower(self):
-        self.assertEqual(cfgtypes.BoolType("false").value(), False)
-    
-    def test_false_caps(self):
-        self.assertEqual(cfgtypes.BoolType("FALSE").value(), False)
-
-    def test_true_1(self):
-        self.assertEqual(cfgtypes.BoolType("1").value(), True)
-    
-    def test_false_0(self):
-        self.assertEqual(cfgtypes.BoolType("0").value(), False)
-    
-    def test_false_3(self):
-        self.assertEqual(cfgtypes.BoolType("3").value(), False)
-    
-    def test_false_abc(self):
-        self.assertEqual(cfgtypes.BoolType("abc").value(), False)
-
 class TestOption(unittest.TestCase):
-    pass
+    def test_default_is_not_required(self):
+        self.assertFalse(configparse.ConfigOption('name', cfgtypes.BaseType).is_required())
 
-class TestGroup(unittest.TestCase):
-    pass
+class TestSection(unittest.TestCase):
+    def test_default_is_not_required(self):
+        self.assertFalse(configparse.ConfigSection('name').is_required())
+    
+    def test_required_section_is_required(self):
+        self.assertTrue(configparse.ConfigSection('name', required=True).is_required())
+    
+    def test_all_optional_section_is_not_required(self):
+        sec = configparse.ConfigSection('name')
+        sec.add_option('opt1', cfgtypes.BaseType).add_option('opt2', cfgtypes.BaseType)
+        self.assertFalse(sec.is_required())
+
+    def test_constructor_overrides_required_of_options(self):
+        sec = configparse.ConfigSection('name', required=True)
+        sec.add_option('opt1', cfgtypes.BaseType).add_option('opt2', cfgtypes.BaseType)
+        self.assertTrue(sec.is_required())
+
+    def test_one_required_section_is_required(self):
+        sec = configparse.ConfigSection('name')
+        sec.add_option('opt1', cfgtypes.BaseType, required=True).add_option('opt2', cfgtypes.BaseType)
+        self.assertTrue(sec.is_required())
+
+    def test_last_required_section_is_required(self):
+        sec = configparse.ConfigSection('name')
+        sec.add_option('opt1', cfgtypes.BaseType).add_option('opt2', cfgtypes.BaseType, required=True)
+        self.assertTrue(sec.is_required())
+
+    def test_all_required_section_is_required(self):
+        sec = configparse.ConfigSection('name')
+        sec.add_option('opt1', cfgtypes.BaseType, required=True).add_option('opt2', cfgtypes.BaseType, required=True)
+        self.assertTrue(sec.is_required())
 
 class TestConfigParser(unittest.TestCase):
     def test_single_group(self):

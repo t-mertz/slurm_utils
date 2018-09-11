@@ -6,14 +6,17 @@ This module provides simple tests is_<type>.
 
 def is_float(val):
     try:
-        float(val)
+        return float(val) - val == 0
     except:
         return False
-    return True
+    return False
 
 def is_int(val):
     try:
-        int(val)
+        return int(val) - val == 0
     except:
         return False
-    return True
+    return False
+
+def is_zero(val):
+    return val == 0

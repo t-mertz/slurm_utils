@@ -13,7 +13,7 @@ import copy
 # options
 
 class ConfigOption(object):
-    def __init__(self, name, type, default=None, valid_values=None, desc=None, required=True):
+    def __init__(self, name, type, default=None, valid_values=None, desc=None, required=False):
         self._name = name
         self._type = type
         self._default = default
@@ -68,7 +68,7 @@ class _OptionsContainer(object):
         else:
             raise RuntimeError("Name {} already defined.".format(name))
     
-    def add_option(self, name, type, default=None, valid_values=None, desc=None, required=True):
+    def add_option(self, name, type, default=None, valid_values=None, desc=None, required=False):
         """Add an option."""
         option = ConfigOption(name, type, default, valid_values, desc, required)
         self._add_option(option)
@@ -150,10 +150,11 @@ class _MutuallyExclusiveGroup(_OptionsGroup):
 class ConfigSection(_OptionsContainer):
     """Container for a section in an .ini file. Can contain many options and option groups."""
 
-    def __init__(self, name):
+    def __init__(self, name, required=False):
         super(ConfigSection, self).__init__()
 
         self._name = name
+        self._required = required
     
     def get_name(self):
         return self._name

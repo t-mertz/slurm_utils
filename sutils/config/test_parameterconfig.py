@@ -188,4 +188,8 @@ class TestConstructParameter(unittest.TestCase):
         )
 
 class TestParseParameters(unittest.TestCase):
-    pass
+    def test_single_parameter_value(self):
+        config = {'pconfig': {'mode': 'square', 'maxdecimals': 3}}
+        config['parameters'] = {'par-a': {'value': '2'}}
+        parameterconfig.parse_parameters(config)
+        self.assertEqual(len(config['parameters']), 1)

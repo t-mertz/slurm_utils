@@ -59,7 +59,7 @@ class BaseConfigOption(object):
 class ConfigOption(BaseConfigOption):
     group = GeneralGroup
     name = u""
-    values = (,)
+    values = ()
     default_value = None
     description = u""
 

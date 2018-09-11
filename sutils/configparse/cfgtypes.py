@@ -100,6 +100,9 @@ class ListType(Type):
             str_list[i] = element_t(item.strip()).value()
 
         self._value = str_list
+    
+    def __len__(self):
+        return len(self._value)
 
 
 class StringListType(ListType):
