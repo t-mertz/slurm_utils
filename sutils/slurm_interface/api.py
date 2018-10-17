@@ -4,6 +4,8 @@ import os
 import getpass
 import subprocess
 
+import numpy as np
+
 from . import config
 from ..test import test
 from ..utils.util import to_list
@@ -58,8 +60,30 @@ def squeue_user():
     return retval, SqueueResult(data)
 
 
+
+def _sinfo(format=None, node=False, noheader=False):
+    args = config.SinfoConfig(format=format, node=node, noheader=noheader).to_list()
+
+    retval, stdout, stderr = run_command('sinfo', args)
+
+    if retval != 0:
+        raise RuntimeError("Call to `sinfo` failed: \n" + stderr)
+    
+    return stdout
+
+def sinfo(format=None, node=False, noheader=False):
+    stdout = _sinfo(format=format, node=node, noheader=noheader)
+    
+    return SinfoResult(stdout)
+
 class Result(object):
-    pass
+    def __init__(self, data):
+        self._data = data.strip().split('\n')
+        # remove empty lines
+        self._data = [l for l in self._data if len(l) > 0]
+    
+    def __len__(self):
+        return len(self._data)
 
 class SqueueResult(Result):
     def __init__(self, data):
@@ -85,3 +109,16 @@ class SqueueResult(Result):
     def __iter__(self):
         for i in self.jobid:
             yield i
+
+class SinfoResult(Result):
+    def __init__(self, data):
+        super(SinfoResult, self).__init__(data)
+
+        data_table = [[entry.strip() for entry in line.split()] for line in self._data]
+        if len(self._data) == 0:
+            data_table = [[]]
+        self._data_array = np.array(data_table)
+
+    def __iter__(self):
+        for i in range(len(self)):
+            yield self._data_array[i, :]

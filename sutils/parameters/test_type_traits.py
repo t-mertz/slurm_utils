@@ -51,11 +51,13 @@ class TestIsInt(unittest.TestCase):
     def test_n5(self):
         self.assertTrue(type_traits.is_int(-5))
     
-    def test_7L(self):
-        self.assertTrue(type_traits.is_int(7L))
+
+    """ there is no 'long' type in python3"""
+    #def test_7L(self):
+    #    self.assertTrue(type_traits.is_int(7L))
     
-    def test_n7L(self):
-        self.assertTrue(type_traits.is_int(-7L))
+    #def test_n7L(self):
+    #    self.assertTrue(type_traits.is_int(-7L))
 
 
 class TestIsFloat(unittest.TestCase):
@@ -107,13 +109,14 @@ class TestIsFloat(unittest.TestCase):
     def test_n5(self):
         self.assertTrue(type_traits.is_float(-5))
     
-    def test_7L(self):
-        self.assertTrue(type_traits.is_float(7L))
+    """ there is no 'long' type in python3"""
+    # def test_7L(self):
+    #     self.assertTrue(type_traits.is_float(7L))
     
-    def test_n7L(self):
-        self.assertTrue(type_traits.is_float(-7L))
+    # def test_n7L(self):
+    #     self.assertTrue(type_traits.is_float(-7L))
     
-class TestIsFloat(unittest.TestCase):
+class TestIsZero(unittest.TestCase):
     def test_None(self):
         self.assertFalse(type_traits.is_zero(None))
     
@@ -171,8 +174,9 @@ class TestIsFloat(unittest.TestCase):
     def test_n5(self):
         self.assertFalse(type_traits.is_zero(-5))
     
-    def test_7L(self):
-        self.assertFalse(type_traits.is_zero(7L))
+    """ there is no 'long' type in python3"""
+    # def test_7L(self):
+    #     self.assertFalse(type_traits.is_zero(7L))
     
-    def test_n7L(self):
-        self.assertFalse(type_traits.is_zero(-7L))
+    # def test_n7L(self):
+    #     self.assertFalse(type_traits.is_zero(-7L))

@@ -4,6 +4,8 @@ from ..configparse import cfgtypes
 
 PREFIX = "#SBATCH --" # this prefix marks SBATCH settings
 
+# Default settings
+SINFO_DEFAULT_FORMAT = r"%#P %.5a %.10l %.6D %.6t %N"
 
 # time type
 class TimeType(cfgtypes.Type):
@@ -142,7 +144,7 @@ class SBATCH_time(SBATCH_Option):
             hours, minutes, seconds = int(tmp[0]), int(tmp[1]), int(tmp[2])
 
 
-        self._value = "{days:d}-:{hours:02d}:{minutes:02d}:{seconds:02d}".format(days=days,
+        self._value = "{days:d}-{hours:02d}:{minutes:02d}:{seconds:02d}".format(days=days,
                                                                            hours=hours,
                                                                            minutes=minutes,
                                                                            seconds=seconds)
@@ -375,3 +377,24 @@ class SqueueConfig(ArgumentList):
         self._args += cls.States(states).parse()
 
     
+class SinfoConfig(ArgumentList):
+    """Container for sinfo configuration."""
+
+    class Format(ArgOption):
+        _option = "--Format"
+    
+    class Node(ToggleOption):
+        _option = "--Node"
+
+    class Noheader(ToggleOption):
+        _option = "--noheader"
+
+    def __init__(self, format=None, node=False, noheader=False):
+        cls = self.__class__
+        self._args = []
+        if format is not None:
+            self._args += cls.Format(format).parse()
+        if node is not None:
+            self._args += cls.Node(node).parse()
+        if noheader is not None:
+            self._args += cls.Noheader(noheader).parse()
