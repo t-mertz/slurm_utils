@@ -8,7 +8,7 @@ def cpu_count():
     count = {}
 
     for node in res:
-        node_name = node[1]
+        node_name = node[0]
         ncpus = int(node[3].split('/')[-1])
         count.setdefault(node_name, 0)
         count[node_name] += ncpus

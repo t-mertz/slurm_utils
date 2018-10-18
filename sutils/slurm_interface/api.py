@@ -122,3 +122,30 @@ class SinfoResult(Result):
     def __iter__(self):
         for i in range(len(self)):
             yield self._data_array[i, :]
+
+class SinfoData(object):
+    def __init__(self, res):
+        info = {}
+        info['node_names'] = np.copy(res._data_array[:, 0]).astype(np.unicode_)
+        info['partitions'] = np.copy(res._data_array[:, 1]).astype(np.unicode_)
+        info['loads'] = np.copy(res._data_array[:, 2]).astype(float)
+
+        tmp = np.array([s.split('/') for s in res._data_array[:, 3]], dtype=int)
+        info['alloc_cpus'] = tmp[:, 0]
+        info['idle_cpus'] = tmp[:, 1]
+        info['other_cpus'] = tmp[:, 2]
+        info['all_cpus'] = tmp[:, 3]
+
+        tmp = np.array([s.split(':') for s in res._data_array[:, 4]], dtype=int)
+        info['sockets_per_node'] = tmp[:, 0]
+        info['cores_per_socket'] = tmp[:, 1]
+        info['threads_per_core'] = tmp[:, 2]
+
+        info['state'] = np.copy(res._data_array[:, 5]).astype(np.unicode_)
+        info['memory'] = np.copy(res._data_array[:, 6]).astype(int)
+        info['available_memory'] = np.copy(res._data_array[:, 7]).astype(int)
+        info['alloc_memory'] = np.copy(res._data_array[:, 8]).astype(int)
+
+        info['features'] = np.copy(res._data_array[:, 9]).astype(np.unicode_)
+
+        self._info_data = info
