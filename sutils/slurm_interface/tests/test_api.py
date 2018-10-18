@@ -171,6 +171,34 @@ class TestSinfoData(unittest.TestCase):
         for key, val in dat.items():
             self.assertTrue(np.all(res._info_data[key] == val))
 
+    def test_filter_cpus_ge5(self):
+        retval = "node01  partition  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n" \
+                +"node02  partition1  1.00  7/8/1/16  2:8:2  alloc  16384  16000  10  infiniband\n"
+        res = slurm.SinfoResult(retval)
+        infodat = slurm.SinfoData(res)
+
+        filtered = infodat.filter_cpus(5)
+        dat = {
+            'nodehost': np.array(["node02"]),
+            'partition': np.array(["partition1"]),
+            'cpusload': np.array([1.0]),
+            'alloccpus': np.array([7]),
+            'idlecpus': np.array([8]),
+            'othercpus': np.array([1]),
+            'allcpus': np.array([16]),
+            'sockets_per_node': np.array([2]),
+            'cores_per_socket': np.array([8]),
+            'threads_per_core': np.array([2]),
+            'state': np.array(['alloc']),
+            'memory': np.array([16384]),
+            'freememory': np.array([16000]),
+            'allocmemory': np.array([10]),
+            'features': np.array(['infiniband']),
+        }
+        
+        for key, val in dat.items():
+            self.assertTrue(np.all(filtered._info_data[key] == val))
+
 
 class Test_sinfo_detail(unittest.TestCase):
     @patch("sutils.slurm_interface.api.sinfo")

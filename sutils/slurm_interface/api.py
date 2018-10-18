@@ -252,3 +252,30 @@ class SinfoData(object):
         
         return inst
 
+    def _copy_info_data(self, inst, inds=slice(None)):
+        inst._info_data['nodehost'] = self._info_data['nodehost'][inds]
+        inst._info_data['partition'] = self._info_data['partition'][inds]
+        inst._info_data['cpusload'] = self._info_data['cpusload'][inds]
+        inst._info_data['alloccpus'] = self._info_data['alloccpus'][inds]
+        inst._info_data['idlecpus'] = self._info_data['idlecpus'][inds]
+        inst._info_data['othercpus'] = self._info_data['othercpus'][inds]
+        inst._info_data['allcpus'] = self._info_data['allcpus'][inds]
+        inst._info_data['sockets_per_node'] = self._info_data['sockets_per_node'][inds]
+        inst._info_data['cores_per_socket'] = self._info_data['cores_per_socket'][inds]
+        inst._info_data['threads_per_core'] = self._info_data['threads_per_core'][inds]
+        inst._info_data['state'] = self._info_data['state'][inds]
+        inst._info_data['memory'] = self._info_data['memory'][inds]
+        inst._info_data['freememory'] = self._info_data['freememory'][inds]
+        inst._info_data['allocmemory'] = self._info_data['allocmemory'][inds]
+        inst._info_data['features'] = self._info_data['features'][inds]
+
+    def filter_cpus(self, n):
+        """Create a new instance containing only nodes with at least n cpus."""
+        inst = SinfoData()
+        inds = np.argwhere(self._info_data['allcpus'] >= n)
+        self._copy_info_data(inst, inds=inds)
+
+        return inst
+        
+
+
