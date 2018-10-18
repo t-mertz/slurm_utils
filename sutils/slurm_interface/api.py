@@ -10,6 +10,17 @@ from . import config
 from ..test import test
 from ..utils.util import to_list
 
+SINFO_DETAIL_FORMAT = "'nodehost:.10',"\
+                    + "'partitionname:.10',"\
+                    + "'cpusload:.10',"\
+                    + "'cpusstate:.14',"\
+                    + "'socketcorethread:.8',"\
+                    + "'statelong:.12',"\
+                    + "'memory:.8',"\
+                    + "'freemem:.10',"\
+                    + "'allocmem:.10',"\
+                    + "'feature:.11'"
+
 def run_command(cmd, args):
     if test.testmode():
         test.cmd_buffer.write(cmd + " " + " ".join(args))
@@ -62,6 +73,7 @@ def squeue_user():
 
 
 def _sinfo(format=None, node=False, noheader=False):
+    """Run sinfo and return stdout text."""
     args = config.SinfoConfig(format=format, node=node, noheader=noheader).to_list()
 
     retval, stdout, stderr = run_command('sinfo', args)
@@ -72,9 +84,17 @@ def _sinfo(format=None, node=False, noheader=False):
     return stdout
 
 def sinfo(format=None, node=False, noheader=False):
+    """Run sinfo and return processed output."""
     stdout = _sinfo(format=format, node=node, noheader=noheader)
     
     return SinfoResult(stdout)
+
+
+def sinfo_detail():
+    """Run sinfo with a predefined format specification that generates 
+    detailed information about the node hardware.
+    """
+    return SinfoData(sinfo(format=SINFO_DETAIL_FORMAT, node=True, noheader=True))
 
 class Result(object):
     def __init__(self, data):
@@ -126,15 +146,15 @@ class SinfoResult(Result):
 class SinfoData(object):
     def __init__(self, res):
         info = {}
-        info['node_names'] = np.copy(res._data_array[:, 0]).astype(np.unicode_)
-        info['partitions'] = np.copy(res._data_array[:, 1]).astype(np.unicode_)
-        info['loads'] = np.copy(res._data_array[:, 2]).astype(float)
+        info['nodehost'] = np.copy(res._data_array[:, 0]).astype(np.unicode_)
+        info['partition'] = np.copy(res._data_array[:, 1]).astype(np.unicode_)
+        info['cpusload'] = np.copy(res._data_array[:, 2]).astype(float)
 
         tmp = np.array([s.split('/') for s in res._data_array[:, 3]], dtype=int)
-        info['alloc_cpus'] = tmp[:, 0]
-        info['idle_cpus'] = tmp[:, 1]
-        info['other_cpus'] = tmp[:, 2]
-        info['all_cpus'] = tmp[:, 3]
+        info['alloccpus'] = tmp[:, 0]
+        info['idlecpus'] = tmp[:, 1]
+        info['othercpus'] = tmp[:, 2]
+        info['allcpus'] = tmp[:, 3]
 
         tmp = np.array([s.split(':') for s in res._data_array[:, 4]], dtype=int)
         info['sockets_per_node'] = tmp[:, 0]
@@ -143,9 +163,15 @@ class SinfoData(object):
 
         info['state'] = np.copy(res._data_array[:, 5]).astype(np.unicode_)
         info['memory'] = np.copy(res._data_array[:, 6]).astype(int)
-        info['available_memory'] = np.copy(res._data_array[:, 7]).astype(int)
-        info['alloc_memory'] = np.copy(res._data_array[:, 8]).astype(int)
+        info['freememory'] = np.copy(res._data_array[:, 7]).astype(int)
+        info['allocmemory'] = np.copy(res._data_array[:, 8]).astype(int)
 
         info['features'] = np.copy(res._data_array[:, 9]).astype(np.unicode_)
 
         self._info_data = info
+
+    def __getitem__(self, key):
+        return self._info_data[key]
+    
+    def __contains__(self, key):
+        return key in self._info_data

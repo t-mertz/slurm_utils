@@ -40,20 +40,20 @@ class TestSinfoData(unittest.TestCase):
         res = slurm.SinfoResult(retval)
 
         dat = {
-            'node_names': np.array(["node01"]),
-            'partitions': np.array(["partition"]),
-            'loads': np.array([0.0]),
-            'alloc_cpus': np.array([0]),
-            'idle_cpus': np.array([4]),
-            'other_cpus': np.array([0]),
-            'all_cpus': np.array([4]),
+            'nodehost': np.array(["node01"]),
+            'partition': np.array(["partition"]),
+            'cpusload': np.array([0.0]),
+            'alloccpus': np.array([0]),
+            'idlecpus': np.array([4]),
+            'othercpus': np.array([0]),
+            'allcpus': np.array([4]),
             'sockets_per_node': np.array([1]),
             'cores_per_socket': np.array([4]),
             'threads_per_core': np.array([1]),
             'state': np.array(['idle']),
             'memory': np.array([8192]),
-            'available_memory': np.array([8000]),
-            'alloc_memory': np.array([0]),
+            'freememory': np.array([8000]),
+            'allocmemory': np.array([0]),
             'features': np.array(['(null)']),
         }
 
@@ -68,20 +68,20 @@ class TestSinfoData(unittest.TestCase):
         res = slurm.SinfoResult(retval)
 
         dat = {
-            'node_names': np.array(["node01", "node02"]),
-            'partitions': np.array(["partition", "partition1"]),
-            'loads': np.array([0.0, 1.0]),
-            'alloc_cpus': np.array([0, 7]),
-            'idle_cpus': np.array([4, 8]),
-            'other_cpus': np.array([0, 1]),
-            'all_cpus': np.array([4, 16]),
+            'nodehost': np.array(["node01", "node02"]),
+            'partition': np.array(["partition", "partition1"]),
+            'cpusload': np.array([0.0, 1.0]),
+            'alloccpus': np.array([0, 7]),
+            'idlecpus': np.array([4, 8]),
+            'othercpus': np.array([0, 1]),
+            'allcpus': np.array([4, 16]),
             'sockets_per_node': np.array([1, 2]),
             'cores_per_socket': np.array([4, 8]),
             'threads_per_core': np.array([1, 2]),
             'state': np.array(['idle', 'alloc']),
             'memory': np.array([8192, 16384]),
-            'available_memory': np.array([8000, 16000]),
-            'alloc_memory': np.array([0, 10]),
+            'freememory': np.array([8000, 16000]),
+            'allocmemory': np.array([0, 10]),
             'features': np.array(['(null)', 'infiniband']),
         }
 
@@ -89,3 +89,57 @@ class TestSinfoData(unittest.TestCase):
         
         for key, val in dat.items():
             self.assertTrue(np.all(infodat._info_data[key] == val))
+
+    def test_getitem_hit(self):
+        retval = "node01  partition  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n" \
+                +"node02  partition1  1.00  7/8/1/16  2:8:2  alloc  16384  16000  10  infiniband\n"
+        res = slurm.SinfoResult(retval)
+        infodat = slurm.SinfoData(res)
+        for key in ['nodehost', 'partition', 'cpusload', 'alloccpus', 
+                    'idlecpus', 'othercpus', 'allcpus', 
+                    'sockets_per_node', 'cores_per_socket', 
+                    'threads_per_core', 'state', 'memory', 'freememory',
+                    'allocmemory', 'features']:
+            self.assertIn(key, infodat)
+
+    def test_getitem_miss(self):
+        retval = "node01  partition  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n" \
+                +"node02  partition1  1.00  7/8/1/16  2:8:2  alloc  16384  16000  10  infiniband\n"
+        res = slurm.SinfoResult(retval)
+        infodat = slurm.SinfoData(res)
+        self.assertRaises(KeyError, infodat.__getitem__, 'abc')
+
+class Test_sinfo_detail(unittest.TestCase):
+    @patch("sutils.slurm_interface.api.sinfo")
+    def test_calls_sinfo(self, sinfo):
+        stdout = "node01  partition  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n" \
+                +"node02  partition1  1.00  7/8/1/16  2:8:2  alloc  16384  16000  10  infiniband\n"
+        sinfo.return_value = slurm.SinfoResult(stdout)
+        slurm.sinfo_detail()
+        sinfo.assert_called_once_with(format=slurm.SINFO_DETAIL_FORMAT, node=True, noheader=True)
+
+    @patch("sutils.slurm_interface.api.sinfo")
+    def test_returns_processed_sinforesult(self, sinfo):
+        stdout = "node01  partition  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n" \
+                +"node02  partition1  1.00  7/8/1/16  2:8:2  alloc  16384  16000  10  infiniband\n"
+        sinfo.return_value = slurm.SinfoResult(stdout)
+        retval = slurm.sinfo_detail()
+        dat = {
+            'nodehost': np.array(["node01", "node02"]),
+            'partition': np.array(["partition", "partition1"]),
+            'cpusload': np.array([0.0, 1.0]),
+            'alloccpus': np.array([0, 7]),
+            'idlecpus': np.array([4, 8]),
+            'othercpus': np.array([0, 1]),
+            'allcpus': np.array([4, 16]),
+            'sockets_per_node': np.array([1, 2]),
+            'cores_per_socket': np.array([4, 8]),
+            'threads_per_core': np.array([1, 2]),
+            'state': np.array(['idle', 'alloc']),
+            'memory': np.array([8192, 16384]),
+            'freememory': np.array([8000, 16000]),
+            'allocmemory': np.array([0, 10]),
+            'features': np.array(['(null)', 'infiniband']),
+        }
+        for key, val in dat.items():
+            self.assertTrue(np.all(retval._info_data[key] == val))
