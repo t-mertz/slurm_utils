@@ -3,6 +3,7 @@
 import os
 import getpass
 import subprocess
+import copy
 
 import numpy as np
 
@@ -144,30 +145,78 @@ class SinfoResult(Result):
             yield self._data_array[i, :]
 
 class SinfoData(object):
-    def __init__(self, res):
+    def __init__(self, *args):
+        if len(args) == 0:
+            info = {}
+            info['nodehost'] = np.array([], dtype=np.unicode_)
+            info['partition'] = np.array([], dtype=np.unicode_)
+            info['cpusload'] = np.array([], dtype=float)
+            info['alloccpus'] = np.array([], dtype=int)
+            info['idlecpus'] = np.array([], dtype=int)
+            info['othercpus'] = np.array([], dtype=int)
+            info['allcpus'] = np.array([], dtype=int)
+            info['sockets_per_node'] = np.array([], dtype=int)
+            info['cores_per_socket'] = np.array([], dtype=int)
+            info['threads_per_core'] = np.array([], dtype=int)
+            info['state'] = np.array([], dtype=np.unicode_)
+            info['memory'] = np.array([], dtype=int)
+            info['freememory'] = np.array([], dtype=int)
+            info['allocmemory'] = np.array([], dtype=int)
+            info['features'] = np.array([], dtype=np.unicode_)
+            self._info_data = info
+        elif len(args) == 1:
+            if isinstance(args[0], SinfoResult):
+                self._init_from_result(args[0])
+            elif isinstance(args[0], SinfoData):
+                self._init_from_sinfodata(args[0])
+        else:
+            raise TypeError("__init__() takes up to 1 positional arguments but %d was given" % len(args))
+
+    def _init_from_sinfodata(self, obj):
+        """Copy construction."""
+        self._info_data = copy.deepcopy(obj._info_data)
+
+    def _init_from_result(self, res):
         info = {}
-        info['nodehost'] = np.copy(res._data_array[:, 0]).astype(np.unicode_)
-        info['partition'] = np.copy(res._data_array[:, 1]).astype(np.unicode_)
-        info['cpusload'] = np.copy(res._data_array[:, 2]).astype(float)
+        if len(res) == 0:
+            info['nodehost'] = np.array([], dtype=np.unicode_)
+            info['partition'] = np.array([], dtype=np.unicode_)
+            info['cpusload'] = np.array([], dtype=float)
+            info['alloccpus'] = np.array([], dtype=int)
+            info['idlecpus'] = np.array([], dtype=int)
+            info['othercpus'] = np.array([], dtype=int)
+            info['allcpus'] = np.array([], dtype=int)
+            info['sockets_per_node'] = np.array([], dtype=int)
+            info['cores_per_socket'] = np.array([], dtype=int)
+            info['threads_per_core'] = np.array([], dtype=int)
+            info['state'] = np.array([], dtype=np.unicode_)
+            info['memory'] = np.array([], dtype=int)
+            info['freememory'] = np.array([], dtype=int)
+            info['allocmemory'] = np.array([], dtype=int)
+            info['features'] = np.array([], dtype=np.unicode_)
+        else:
+            info['nodehost'] = np.copy(res._data_array[:, 0]).astype(np.unicode_)
+            info['partition'] = np.copy(res._data_array[:, 1]).astype(np.unicode_)
+            info['cpusload'] = np.copy(res._data_array[:, 2]).astype(float)
 
-        tmp = np.array([s.split('/') for s in res._data_array[:, 3]], dtype=int)
-        info['alloccpus'] = tmp[:, 0]
-        info['idlecpus'] = tmp[:, 1]
-        info['othercpus'] = tmp[:, 2]
-        info['allcpus'] = tmp[:, 3]
+            tmp = np.array([s.split('/') for s in res._data_array[:, 3]], dtype=int)
+            info['alloccpus'] = tmp[:, 0]
+            info['idlecpus'] = tmp[:, 1]
+            info['othercpus'] = tmp[:, 2]
+            info['allcpus'] = tmp[:, 3]
 
-        tmp = np.array([s.split(':') for s in res._data_array[:, 4]], dtype=int)
-        info['sockets_per_node'] = tmp[:, 0]
-        info['cores_per_socket'] = tmp[:, 1]
-        info['threads_per_core'] = tmp[:, 2]
+            tmp = np.array([s.split(':') for s in res._data_array[:, 4]], dtype=int)
+            info['sockets_per_node'] = tmp[:, 0]
+            info['cores_per_socket'] = tmp[:, 1]
+            info['threads_per_core'] = tmp[:, 2]
 
-        info['state'] = np.copy(res._data_array[:, 5]).astype(np.unicode_)
-        info['memory'] = np.copy(res._data_array[:, 6]).astype(int)
-        info['freememory'] = np.copy(res._data_array[:, 7]).astype(int)
-        info['allocmemory'] = np.copy(res._data_array[:, 8]).astype(int)
+            info['state'] = np.copy(res._data_array[:, 5]).astype(np.unicode_)
+            info['memory'] = np.copy(res._data_array[:, 6]).astype(int)
+            info['freememory'] = np.copy(res._data_array[:, 7]).astype(int)
+            info['allocmemory'] = np.copy(res._data_array[:, 8]).astype(int)
 
-        info['features'] = np.copy(res._data_array[:, 9]).astype(np.unicode_)
-
+            info['features'] = np.copy(res._data_array[:, 9]).astype(np.unicode_)
+        
         self._info_data = info
 
     def __getitem__(self, key):
@@ -175,3 +224,31 @@ class SinfoData(object):
     
     def __contains__(self, key):
         return key in self._info_data
+    
+    def filter_partition(self, partitions):
+        """Create a new instance containing only the specified partitions."""
+        inst = SinfoData()
+
+        inds = []
+        for p in partitions:
+            inds.append(np.argwhere(self._info_data['partition']==p))
+        inds = np.sort(np.concatenate(inds))
+
+        inst._info_data['nodehost'] = self._info_data['nodehost'][inds]
+        inst._info_data['partition'] = self._info_data['partition'][inds]
+        inst._info_data['cpusload'] = self._info_data['cpusload'][inds]
+        inst._info_data['alloccpus'] = self._info_data['alloccpus'][inds]
+        inst._info_data['idlecpus'] = self._info_data['idlecpus'][inds]
+        inst._info_data['othercpus'] = self._info_data['othercpus'][inds]
+        inst._info_data['allcpus'] = self._info_data['allcpus'][inds]
+        inst._info_data['sockets_per_node'] = self._info_data['sockets_per_node'][inds]
+        inst._info_data['cores_per_socket'] = self._info_data['cores_per_socket'][inds]
+        inst._info_data['threads_per_core'] = self._info_data['threads_per_core'][inds]
+        inst._info_data['state'] = self._info_data['state'][inds]
+        inst._info_data['memory'] = self._info_data['memory'][inds]
+        inst._info_data['freememory'] = self._info_data['freememory'][inds]
+        inst._info_data['allocmemory'] = self._info_data['allocmemory'][inds]
+        inst._info_data['features'] = self._info_data['features'][inds]
+        
+        return inst
+

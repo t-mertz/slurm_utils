@@ -2,14 +2,11 @@ import numpy as np
 
 from . import api
 
-def cpu_count():
-    res = api.sinfo()
-    
+def cpu_count(sinfo_data):    
     count = {}
 
-    for node in res:
-        node_name = node[0]
-        ncpus = int(node[3].split('/')[-1])
+    for i,node_name in enumerate(sinfo_data['nodehost']):
+        ncpus = sinfo_data['allcpus'][i]
         count.setdefault(node_name, 0)
         count[node_name] += ncpus
     
