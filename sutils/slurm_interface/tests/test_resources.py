@@ -97,16 +97,19 @@ class TestIsCPUCommensurate(unittest.TestCase):
 class TestFindResources(unittest.TestCase):
     def test_zero_request_returns_none(self):
         sinfo_data = slurm.SinfoData(SINFO_STDOUT_TWO_LINE)
-        self.assertEqual(resources.find_resources(sinfo_data, 0), None)
+        self.assertEqual(resources.find_resources(sinfo_data, 0), (0, 0))
 
     def test_single_cpu_returns_none(self):
         sinfo_data = slurm.SinfoData(SINFO_STDOUT_TWO_LINE)
-        self.assertEqual(resources.find_resources(sinfo_data, 1), None)
+        self.assertEqual(resources.find_resources(sinfo_data, 1), (4, 1))
 
     def test_four_cpus_returns_four(self):
         sinfo_data = slurm.SinfoData(SINFO_STDOUT_TWO_LINE)
-        tmp = resources.Resource([4])
-        self.assertEqual(resources.find_resources(sinfo_data, 1), tmp)
+        self.assertEqual(resources.find_resources(sinfo_data, 4), (4, 1))
+
+    def test_too_many_cpus_returns_none(self):
+        sinfo_data = slurm.SinfoData(SINFO_STDOUT_TWO_LINE)
+        self.assertEqual(resources.find_resources(sinfo_data, 10), None)
 
 class TestResource(unittest.TestCase):
     def test_zero_init_raises_ValueError(self):

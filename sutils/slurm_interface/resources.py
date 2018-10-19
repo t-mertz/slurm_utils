@@ -37,7 +37,12 @@ def find_resources(hwdata, n, idle=False):
     cpus = list(hwdata[key])
     optimum = _subset_internal(cpus, n)
 
-    return sum(optimum), len(optimum)
+    if not optimum is False:
+        ret = (sum(optimum), len(optimum))
+    else:
+        ret = None
+    
+    return ret
 
 def _subset_internal(cpus, n, buf=None):
     if buf is None:
