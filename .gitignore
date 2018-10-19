@@ -1,4 +1,8 @@
 build/
 dist/
-*.pyc
+*.py[cod]
 *egg-info/
+
+__pycache__/
+
+.vscode/
