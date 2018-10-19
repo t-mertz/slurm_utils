@@ -1,8 +1,9 @@
 INSTALLED_APPS = {
     'SSUBMIT'   :   'SUBMIT',
-    'SCANCELS'  :   'CANCEL',
+    'STERMINATE':   'CANCEL',
     'SCONFIG'   :   'CONFIG',
     'SSTATUS'   :   'STATUS',
     'SLSCONFIG' :   'LSCONFIG',
     'SPROCESS'  :   'PROCESS',
+    'ASBATCH'   :   'ASSISTBATCH',
 }

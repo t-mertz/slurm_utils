@@ -38,11 +38,12 @@ if len(sys.argv) > 1:
             },
             entry_points={'console_scripts': [
                             'ssubmit  = sutils.bin.submit.__main__:main',
-                            'scancels = sutils.bin.cancel.__main__:main',
+                            'sterminate = sutils.bin.cancel.__main__:main',
                             'sstatus  = sutils.bin.status.__main__:main',
                             'slsconfig = sutils.bin.lsconfig.__main__:main',
                             'sprocess = sutils.bin.process.__main__:main',
                             'sconfig  = sutils.bin.config.__main__:main',
+                            'asbatch  = sutils.bin.assistbatch.__main__:main',
                 ],
             },
         )
