@@ -25,17 +25,25 @@ def is_cpu_commensurate(sinfo_data, n, status='all'):
     return cond1
     
 
-def find_resources(hwdata, n):
-    """Find resources for an allocation of n CPUs."""
-    res = np.array([n])
+def find_resources(hwdata, n, idle=False):
+    """Find resources for an allocation of n CPUs.
+    
+    Returns number of CPUs and the number of nodes.
+    """
+    if idle:
+        key = 'idlecpus'
+    else:
+        key = 'allcpus'
+    cpus = list(hwdata[key])
+    optimum = _subset_internal(cpus, n)
 
-    cpus = list(hwdata['allcpus'])
-    uniques = set(cpus)
+    return sum(optimum), len(optimum)
 
-    for i, c in enumerate(uniques):
-        pass
-
-def _subset_internal(cpus, n):
+def _subset_internal(cpus, n, buf=None):
+    if buf is None:
+        buf = {}
+    if ((tuple(sorted(cpus)), n)) in buf:
+        return buf[(tuple(sorted(cpus)), n)]
     s = sum(cpus)
 
     if n > s:
@@ -51,8 +59,8 @@ def _subset_internal(cpus, n):
     for i,c in enumerate(uniques):
         tmp = copy.copy(cpus)
         tmp.remove(c)
-        exclude = _subset_internal(tmp, n)
-        include = _subset_internal(tmp, n-c)
+        exclude = _subset_internal(tmp, n, buf=buf)
+        include = _subset_internal(tmp, n-c, buf=buf)
         if exclude:
             if sum(exclude) < sum(subsets[i]):
                 subsets[i] = exclude
@@ -76,6 +84,7 @@ def _subset_internal(cpus, n):
             msum = sum(subsets[ind])
 
 
+    buf[(tuple(sorted(cpus)), n)] = subsets[ind]
     return subsets[ind]
 
 

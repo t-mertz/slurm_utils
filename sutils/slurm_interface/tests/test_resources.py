@@ -158,6 +158,22 @@ class TestSubsetInternal(unittest.TestCase):
     def test_cluster_incommensurate(self):
         self.assertEqual(sorted(resources._subset_internal([16, 16, 20, 20], 48)), [16, 16, 20])
 
-    def test_performance(self):
+    def test_xeon_cluster_48(self):
         self.assertEqual(sorted(resources._subset_internal(
-            [16, 16, 16, 16, 16, 16, 16, 16, 16, 20, 20, 20, 20, 20, 20, 20], 48)), [16, 16, 20])
+            [16, 16, 16, 16, 16, 16, 16, 16, 16, 20, 20, 20, 20, 20, 20, 20, 24], 48)), [16, 16, 16])
+    
+    def test_xeon_cluster_24(self):
+        self.assertEqual(sorted(resources._subset_internal(
+            [16, 16, 16, 16, 16, 16, 16, 16, 16, 20, 20, 20, 20, 20, 20, 20], 24)), [16, 16])
+
+    def test_big_cluster_48(self):
+        self.assertEqual(sorted(resources._subset_internal(
+            [48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 64, 64, 64, 64, 24], 48)), [48])
+
+    def test_big_cluster_64(self):
+        self.assertEqual(sorted(resources._subset_internal(
+            [48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 64, 64, 64, 64, 24], 64)), [64])
+
+    def test_big_cluster_200(self):
+        self.assertEqual(sorted(resources._subset_internal(
+            [48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 64, 64, 64, 64, 24], 200)), [24, 48, 64, 64])
