@@ -169,12 +169,20 @@ class SinfoData(object):
                 self._init_from_result(args[0])
             elif isinstance(args[0], SinfoData):
                 self._init_from_sinfodata(args[0])
+            elif isinstance(args[0], str):
+                self._init_from_string(args[0])
+            else:
+                TypeError("Cannot initialize from type '%s'" % str(type(args[0])))
         else:
             raise TypeError("__init__() takes up to 1 positional arguments but %d was given" % len(args))
 
     def _init_from_sinfodata(self, obj):
         """Copy construction."""
         self._info_data = copy.deepcopy(obj._info_data)
+    
+    def _init_from_string(self, obj):
+        """Construct from output string of sinfo."""
+        self._init_from_result(SinfoResult(obj))
 
     def _init_from_result(self, res):
         info = {}
