@@ -2,7 +2,7 @@ import sys
 from . import core
 
 def run(options):
-    if options['all'] is not None:
+    if options['all']:
         run_all(force=options['force'])
     elif options['last'] is not None:
         run_last(options['last'], force=options['force'])

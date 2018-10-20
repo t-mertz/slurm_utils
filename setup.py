@@ -29,7 +29,7 @@ if len(sys.argv) > 1:
             packages=setuptools.find_packages('.'),
             install_requires=['numpy', 
                               'argparse',
-                              'mpi4py',
+                              #'mpi4py',
                               #'psycopg2',
                               #'urwid',
                              ],# add urwid

@@ -15,10 +15,10 @@ from ...utils.argparse_wrap import ArgumentParser, SUPPRESS
 # end delete
 
 parser = ArgumentParser(description="Cancel SLURM jobs of current user.")#, argument_default=SUPPRESS)
-parser.add_argument('-F', '--force', nargs=0, action='store_true', help='Force immediate cancellation of selected jobs. Faster but cannot be aborted.')
+parser.add_argument('-F', '--force', action='store_true', help='Force immediate cancellation of selected jobs. Faster but cannot be aborted.')
 parser.add_mutually_exclusive_group() \
             .add_argument('-l', '--last', metavar='N', type=int, help='Cancel the last N jobs.') \
             .add_argument('-f', '--first', metavar='N', type=int, help='Cancel the first N jobs.') \
-            .add_argument('-a', '--all', nargs=0, help='Cancel all jobs.')
+            .add_argument('-a', '--all', action='store_true', help='Cancel all jobs.')
 
 #parser.parse_args(args)

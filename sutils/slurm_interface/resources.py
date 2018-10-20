@@ -4,7 +4,12 @@ import numpy as np
 
 from . import api
 
-def cpu_count(sinfo_data):    
+def cpu_count(sinfo_data):
+    """Compute the number of cores per node.
+
+    This function is obsolete. Change to compute the number of cores per 
+    partition.
+    """
     count = {}
 
     for i,node_name in enumerate(sinfo_data['nodehost']):
@@ -37,7 +42,7 @@ def find_resources(hwdata, n, idle=False):
     cpus = list(hwdata[key])
     optimum = _subset_internal(cpus, n)
 
-    if not optimum is False:
+    if not optimum is False: # needed since bool([]) == False
         ret = (sum(optimum), len(optimum))
     else:
         ret = None
@@ -45,12 +50,25 @@ def find_resources(hwdata, n, idle=False):
     return ret
 
 def _subset_internal(cpus, n, buf=None):
+    """Solves a problem similar to SubsetSum:
+    
+    Given a list 'cpus' of numbers and a number n find the smallest subset
+    'C' of 'cpus' such that sum(C) >= n. Here, 'smallest' refers to sum(C)
+    and if ambiguous to the size of the subset.
+
+    Returns the subset.
+
+    'buf' is internal storage. Don't pass anything!
+    """
+    # here we setup storage for performance reasons
     if buf is None:
         buf = {}
+    # check if result has already been calculated
     if ((tuple(sorted(cpus)), n)) in buf:
         return buf[(tuple(sorted(cpus)), n)]
     s = sum(cpus)
 
+    # base cases
     if n > s:
         return False
     if n == s:
@@ -58,7 +76,7 @@ def _subset_internal(cpus, n, buf=None):
     if n <= 0:
         return []
     
-    uniques = set(cpus)
+    uniques = set(cpus) # only need to remove each unique number once
 
     subsets = [copy.copy(cpus) for i in uniques]
     for i,c in enumerate(uniques):
@@ -66,18 +84,19 @@ def _subset_internal(cpus, n, buf=None):
         tmp.remove(c)
         exclude = _subset_internal(tmp, n, buf=buf)
         include = _subset_internal(tmp, n-c, buf=buf)
-        if exclude:
+        if exclude: # compute optimal subset if c is excluded
             if sum(exclude) < sum(subsets[i]):
                 subsets[i] = exclude
             elif sum(exclude) == sum(subsets[i]) and len(exclude) < len(subsets[i]):
-                subsets[i] = exclude
+                subsets[i] = exclude    # resolve ambiguity by requiring smallest length
 
-        if include:
+        if include: # compute optimal subset if c is included
             if sum(include)+c < sum(subsets[i]):
                 subsets[i] = include + [c]
             elif sum(include)+c == sum(subsets[i]) and len(include)+1 < len(subsets[i]):
                 subsets[i] = exclude
     
+    # determine the optimal solution out of all picks above
     msum = s
     ind = 0
     for i,cset in enumerate(subsets):
@@ -89,7 +108,7 @@ def _subset_internal(cpus, n, buf=None):
             msum = sum(subsets[ind])
 
 
-    buf[(tuple(sorted(cpus)), n)] = subsets[ind]
+    buf[(tuple(sorted(cpus)), n)] = subsets[ind]    # store result to buffer
     return subsets[ind]
 
 
