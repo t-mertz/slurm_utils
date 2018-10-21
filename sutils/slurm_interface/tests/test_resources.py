@@ -112,23 +112,47 @@ class TestFindResources(unittest.TestCase):
         self.assertEqual(resources.find_resources(sinfo_data, 10), None)
 
 class TestResource(unittest.TestCase):
-    def test_zero_init_raises_ValueError(self):
-        self.assertRaises(ValueError, resources.Resource, [])
-        self.assertRaises(ValueError, resources.Resource, [0])
+    def test_partition_can_be_retrieved(self):
+        res = resources.Resource('partition', 10, 2)
+        self.assertEqual(res.partition(), 'partition')
+    
+    def test_cpus_can_be_retrieved(self):
+        res = resources.Resource('partition', 10, 2)
+        self.assertEqual(res.cpus(), 10)
+    
+    def test_nodes_can_be_retrieved(self):
+        res = resources.Resource('partition', 10, 2)
+        self.assertEqual(res.nodes(), 2)
+    
+    # def test_zero_init_raises_ValueError(self):
+    #     self.assertRaises(ValueError, resources.Resource, [])
+    #     self.assertRaises(ValueError, resources.Resource, [0])
 
-    def test_list_of_three(self):
-        res = resources.Resource([1, 2, 3])
-        self.assertEqual(len(res), 3)
+    # def test_list_of_three(self):
+    #     res = resources.Resource([1, 2, 3])
+    #     self.assertEqual(len(res), 3)
 
     def test_eq_returns_true_for_copy(self):
-        res1 = resources.Resource([1, 2, 3])
-        res2 = resources.Resource([1, 2, 3])
+        res1 = resources.Resource('partition', 2, 3)
+        res2 = resources.Resource('partition', 2, 3)
 
         self.assertEqual(res1, res2)
 
-    def test_eq_returns_false_for_nonequals(self):
-        res1 = resources.Resource([1, 2, 3])
-        res2 = resources.Resource([1, 2])
+    def test_eq_returns_false_for_nonequal_nodes(self):
+        res1 = resources.Resource('partition', 1, 3)
+        res2 = resources.Resource('partition', 1, 2)
+
+        self.assertNotEqual(res1, res2)
+    
+    def test_eq_returns_false_for_nonequal_cpus(self):
+        res1 = resources.Resource('partition', 1, 3)
+        res2 = resources.Resource('partition', 2, 3)
+
+        self.assertNotEqual(res1, res2)
+
+    def test_eq_returns_false_for_nonequal_partitions(self):
+        res1 = resources.Resource('partition', 1, 3)
+        res2 = resources.Resource('partition1', 1, 3)
 
         self.assertNotEqual(res1, res2)
 

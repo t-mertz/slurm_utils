@@ -117,16 +117,25 @@ def _subset_internal(cpus, n, buf=None):
 
 class Resource(object):
     """Container for collection of CPUs."""
-    def __init__(self, cpus):
-        if len(cpus) == 0 or 0 in cpus:
-            raise ValueError("Empty resource is invalid.")
+    def __init__(self, partition, cpus, nodes):
         self._cpus = cpus
+        self._partition = partition
+        self._nodes = nodes
 
-    def __len__(self):
-        return len(self._cpus)
-
+    def partition(self):
+        return self._partition
+    
+    def cpus(self):
+        return self._cpus
+    
+    def nodes(self):
+        return self._nodes
+    
     def __eq__(self, obj):
         if isinstance(obj, Resource):
-            return self._cpus == obj._cpus
+            cond1 = self._cpus == obj._cpus
+            cond2 = self._partition == obj._partition
+            cond3 = self._nodes == obj._nodes
+            return cond1 and cond2 and cond3
         else:
             False
