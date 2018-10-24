@@ -69,6 +69,29 @@ class TestSinfoData(unittest.TestCase):
         for key, val in infodat1._info_data.items():
             self.assertTrue(np.all(infodat._info_data[key]==val))
         
+    def test_array_shape(self):
+        retval = "node01  partition  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n" \
+                +"node02  partition1  1.00  7/8/1/16  2:8:2  alloc  16384  16000  10  infiniband\n"
+        res = slurm.SinfoResult(retval)
+        infodat = slurm.SinfoData(res)
+
+         
+        self.assertEqual(infodat['nodehost'].shape, (2,))
+        self.assertEqual(infodat['partition'].shape, (2,))
+        self.assertEqual(infodat['cpusload'].shape, (2,))
+        self.assertEqual(infodat['alloccpus'].shape, (2,))
+        self.assertEqual(infodat['idlecpus'].shape, (2,))
+        self.assertEqual(infodat['othercpus'].shape, (2,))
+        self.assertEqual(infodat['allcpus'].shape, (2,))
+        self.assertEqual(infodat['sockets_per_node'].shape, (2,))
+        self.assertEqual(infodat['cores_per_socket'].shape, (2,))
+        self.assertEqual(infodat['threads_per_core'].shape, (2,))
+        self.assertEqual(infodat['state'].shape, (2,))
+        self.assertEqual(infodat['memory'].shape, (2,))
+        self.assertEqual(infodat['freememory'].shape, (2,))
+        self.assertEqual(infodat['allocmemory'].shape, (2,))
+        self.assertEqual(infodat['features'].shape, (2,))
+
     def test_single_line(self):
         retval = "node01  partition  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n"
         res = slurm.SinfoResult(retval)

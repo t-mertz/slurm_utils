@@ -40,6 +40,8 @@ def find_resources(hwdata, n, idle=False):
     else:
         key = 'allcpus'
     cpus = list(hwdata[key])
+    for i in range(cpus.count(0)):
+        cpus.remove(0) # remove nodes with 0 CPUs
     optimum = _subset_internal(cpus, n)
 
     if not optimum is False: # needed since bool([]) == False
@@ -49,7 +51,7 @@ def find_resources(hwdata, n, idle=False):
     
     return ret
 
-def _subset_internal(cpus, n, buf=None):
+def _subset_internal(cpus, n, _buf=None):
     """Solves a problem similar to SubsetSum:
     
     Given a list 'cpus' of numbers and a number n find the smallest subset
@@ -58,14 +60,14 @@ def _subset_internal(cpus, n, buf=None):
 
     Returns the subset.
 
-    'buf' is internal storage. Don't pass anything!
+    '_buf' is internal storage. Don't pass anything!
     """
     # here we setup storage for performance reasons
-    if buf is None:
-        buf = {}
+    if _buf is None:
+        _buf = {}
     # check if result has already been calculated
-    if ((tuple(sorted(cpus)), n)) in buf:
-        return buf[(tuple(sorted(cpus)), n)]
+    if ((tuple(sorted(cpus)), n)) in _buf:
+        return _buf[(tuple(sorted(cpus)), n)]
     s = sum(cpus)
 
     # base cases
@@ -82,8 +84,8 @@ def _subset_internal(cpus, n, buf=None):
     for i,c in enumerate(uniques):
         tmp = copy.copy(cpus)
         tmp.remove(c)
-        exclude = _subset_internal(tmp, n, buf=buf)
-        include = _subset_internal(tmp, n-c, buf=buf)
+        exclude = _subset_internal(tmp, n, _buf=_buf)
+        include = _subset_internal(tmp, n-c, _buf=_buf)
         if exclude: # compute optimal subset if c is excluded
             if sum(exclude) < sum(subsets[i]):
                 subsets[i] = exclude
@@ -94,7 +96,7 @@ def _subset_internal(cpus, n, buf=None):
             if sum(include)+c < sum(subsets[i]):
                 subsets[i] = include + [c]
             elif sum(include)+c == sum(subsets[i]) and len(include)+1 < len(subsets[i]):
-                subsets[i] = exclude
+                subsets[i] = include + [c]
     
     # determine the optimal solution out of all picks above
     msum = s
@@ -108,7 +110,7 @@ def _subset_internal(cpus, n, buf=None):
             msum = sum(subsets[ind])
 
 
-    buf[(tuple(sorted(cpus)), n)] = subsets[ind]    # store result to buffer
+    _buf[(tuple(sorted(cpus)), n)] = subsets[ind]    # store result to buffer
     return subsets[ind]
 
 

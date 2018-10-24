@@ -55,7 +55,7 @@ class TestFindOptimalResources(unittest.TestCase):
         filter_partition.return_value = slurm.SinfoData(self.sinfo_stdout.split('\n')[0])
         core.find_optimal_resources(self.infodat, req, idle=True)
 
-        filter_partition.assert_called_once_with('partition')
+        filter_partition.assert_called_once_with(['partition'])
     
     @patch("sutils.applications.assistbatch.core.resources.find_resources")
     @patch("sutils.applications.assistbatch.core.slurm.SinfoData.filter_partition")
@@ -75,7 +75,7 @@ class TestFindOptimalResources(unittest.TestCase):
         req = resources.Resource('partition', 1, 1)
         ret = core.find_optimal_resources(self.infodat, req, idle=True)
         opt = resources.Resource('partition', 10, 2)
-        self.assertEqual(ret, opt)
+        self.assertEqual(ret, [opt])
 
 SAMPLE_FILE = ''.join([
     "#!/bin/sh\n",

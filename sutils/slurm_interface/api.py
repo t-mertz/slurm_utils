@@ -11,16 +11,16 @@ from . import config
 from ..test import test
 from ..utils.util import to_list
 
-SINFO_DETAIL_FORMAT = "'nodehost:.10',"\
-                    + "'partitionname:.10',"\
-                    + "'cpusload:.10',"\
-                    + "'cpusstate:.14',"\
-                    + "'socketcorethread:.8',"\
-                    + "'statelong:.12',"\
-                    + "'memory:.8',"\
-                    + "'freemem:.10',"\
-                    + "'allocmem:.10',"\
-                    + "'feature:.11'"
+SINFO_DETAIL_FORMAT = "nodehost:.30,"\
+                    + "partitionname:.20,"\
+                    + "cpusload:.10,"\
+                    + "cpusstate:.16,"\
+                    + "socketcorethread:.12,"\
+                    + "statelong:.14,"\
+                    + "memory:.14,"\
+                    + "freemem:.14,"\
+                    + "allocmem:.14,"\
+                    + "features:.50"
 
 def run_command(cmd, args):
     if test.testmode():
@@ -28,12 +28,12 @@ def run_command(cmd, args):
         stdout = ""
         stderr = ""
     else:
-        p = subprocess.Popen(args, executable=cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.Popen([cmd] + args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         p.wait()
         stdout, stderr = p.communicate()
         p.terminate()
 
-    retval = 0 if len(stderr) > 0 else 1
+    retval = 0 if len(stderr) == 0 else 1
 
     return retval, stdout, stderr
 
@@ -80,9 +80,9 @@ def _sinfo(format=None, node=False, noheader=False):
     retval, stdout, stderr = run_command('sinfo', args)
 
     if retval != 0:
-        raise RuntimeError("Call to `sinfo` failed: \n" + stderr)
+        raise RuntimeError("Call to `sinfo` failed: \n" + stderr.decode('utf-8'))
     
-    return stdout
+    return stdout.decode('utf-8')
 
 def sinfo(format=None, node=False, noheader=False):
     """Run sinfo and return processed output."""
@@ -239,7 +239,7 @@ class SinfoData(object):
 
         inds = []
         for p in partitions:
-            inds.append(np.argwhere(self._info_data['partition']==p))
+            inds.append(np.argwhere(self._info_data['partition']==p).flatten())
         inds = np.sort(np.concatenate(inds))
 
         inst._info_data['nodehost'] = self._info_data['nodehost'][inds]

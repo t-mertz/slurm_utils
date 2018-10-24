@@ -1,3 +1,4 @@
+from __future__ import print_function
 import math # ceil, log10
 import sys
 
@@ -23,9 +24,9 @@ def submit(filename, firstmatch=False):
         pass
 
     for cur_resource in requested_resources:
-        idle_resources.append(find_optimal_resources(hwdata, cur_resource, idle=True))
+        idle_resources.extend(find_optimal_resources(hwdata, cur_resource, idle=True))
 
-        queued_resources.append(find_optimal_resources(hwdata, cur_resource, idle=False))
+        queued_resources.extend(find_optimal_resources(hwdata, cur_resource, idle=False))
         # if opt is None:
         #     print("Error: Number of requested cores exceeds total number of "\
         #             +"partition {}. \nAborting.".format(partition))
@@ -42,7 +43,8 @@ def submit(filename, firstmatch=False):
     # submit the job
 
 def get_option_from_user(txt, idle_resources, queued_resources):
-    print(txt, end='')
+    for line in txt:
+        print(line, end='')
     selection_query = 'Select an option: '
     error_msg = 'Please provide a number between {} and {}.'.format(
         1, len(txt)
@@ -64,16 +66,19 @@ def get_option_from_user(txt, idle_resources, queued_resources):
 
 def find_optimal_resources(hwdata, requested_resource, idle=True):
     # filter partition
-    part_hwdata = hwdata.filter_partition(requested_resource.partition())
+    part_hwdata = hwdata.filter_partition([requested_resource.partition()])
 
     # get optimal resource allocation (just idle)
     opt = resources.find_resources(part_hwdata, requested_resource.cpus(), idle=idle)
 
-    return resources.Resource(
-        requested_resource.partition(),
-        opt[0],
-        opt[1]
-    )
+    if opt is None:
+        return []
+    else:
+        return [resources.Resource(
+            requested_resource.partition(),
+            opt[0],
+            opt[1]
+        )]
 
 def read_sbatch_file(filename):
     nodes = None
