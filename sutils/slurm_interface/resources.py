@@ -139,3 +139,11 @@ class Resource(object):
             return cond1 and cond2 and cond3
         else:
             False
+
+    def __repr__(self):
+        format_str = "<Resource object, partition={partition}, cpus={cpus}, nodes={nodes}>"
+        return format_str.format(
+            partition=self._partition,
+            cpus=self._cpus,
+            nodes=self._nodes
+        )

@@ -1,9 +1,14 @@
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, mock_open, MagicMock, Mock
 
 from ...slurm_interface import resources as resources
 from ...slurm_interface import api as slurm
 from . import core
+
+def my_mock_open(*args, **kwargs):
+    f_open = mock_open(*args, **kwargs)
+    f_open.return_value.__iter__ = lambda self: iter(self.readline, '')
+    return f_open
 
 class TestGetResourceSummary(unittest.TestCase):
     def test_print_none(self):
@@ -44,7 +49,7 @@ class TestFindOptimalResources(unittest.TestCase):
                 +"node02  partition1  1.00  7/8/1/16  2:8:2  alloc  16384  16000  10  infiniband\n"
         self.infodat = slurm.SinfoData(self.sinfo_stdout)
 
-    @patch("sutils.slurm_interface.api.SinfoData.filter_partition")
+    @patch("sutils.applications.assistbatch.core.slurm.SinfoData.filter_partition")
     def test_calls_filter_partition(self, filter_partition):
         req = resources.Resource('partition', 1, 1)
         filter_partition.return_value = slurm.SinfoData(self.sinfo_stdout.split('\n')[0])
@@ -52,8 +57,8 @@ class TestFindOptimalResources(unittest.TestCase):
 
         filter_partition.assert_called_once_with('partition')
     
-    @patch("sutils.slurm_interface.resources.find_resources")
-    @patch("sutils.slurm_interface.api.SinfoData.filter_partition")
+    @patch("sutils.applications.assistbatch.core.resources.find_resources")
+    @patch("sutils.applications.assistbatch.core.slurm.SinfoData.filter_partition")
     def test_calls_find_resources(self, filter_partition, find_resources):
         part_infodat = slurm.SinfoData(self.sinfo_stdout.split('\n')[0])
         filter_partition.return_value = part_infodat
@@ -64,7 +69,7 @@ class TestFindOptimalResources(unittest.TestCase):
 
         find_resources.assert_called_once_with(part_infodat, 1, idle=True)
 
-    @patch("sutils.slurm_interface.resources.find_resources")
+    @patch("sutils.applications.assistbatch.core.resources.find_resources")
     def test_returns_optimal_resource(self, find_resources):
         find_resources.return_value = (10, 2)
         req = resources.Resource('partition', 1, 1)
@@ -72,5 +77,84 @@ class TestFindOptimalResources(unittest.TestCase):
         opt = resources.Resource('partition', 10, 2)
         self.assertEqual(ret, opt)
 
+SAMPLE_FILE = ''.join([
+    "#!/bin/sh\n",
+    "#SBATCH --partition=mypartition\n",
+    "#SBATCH --ntasks=20\n",
+    "sleep 1\n"
+])
+
+SAMPLE_FILE_NODES = ''.join([
+    "#!/bin/sh\n",
+    "#SBATCH --partition=mypartition\n",
+    "#SBATCH --ntasks=20\n",
+    "#SBATCH --nodes=2\n"
+    "sleep 1\n"
+])
+
+SAMPLE_FILE_TWO_PARTITIONS = ''.join([
+    "#!/bin/sh\n",
+    "#SBATCH --partition=mypartition,mysecondpartition\n",
+    "#SBATCH --ntasks=20\n",
+    "sleep 1\n"
+])
+
+SAMPLE_FILE_MISSING_PARTITION = ''.join([
+    "#!/bin/sh\n",
+    "#SBATCH --ntasks=20\n",
+    "sleep 1\n"
+])
+
+SAMPLE_FILE_MISSING_NTASKS = ''.join([
+    "#!/bin/sh\n",
+    "#SBATCH --partition=mypartition\n",
+    "sleep 1\n"
+])
+
 class TestReadSbatchFile(unittest.TestCase):
+    @patch("sutils.applications.assistbatch.core.open", my_mock_open(read_data=SAMPLE_FILE_MISSING_PARTITION), create=True)
+    def test_missing_partition_raises_runtimeerror(self):
+        self.assertRaises(RuntimeError, core.read_sbatch_file, 'filename')
+    
+    @patch("sutils.applications.assistbatch.core.open", my_mock_open(read_data=SAMPLE_FILE_MISSING_NTASKS), create=True)
+    def test_missing_ntasks_raises_runtimeerror(self):
+        self.assertRaises(RuntimeError, core.read_sbatch_file, 'filename')
+    
+    @patch("sutils.applications.assistbatch.core.open", my_mock_open(read_data=SAMPLE_FILE), create=True)
+    def test_reads_single_partition_correctly(self):
+        res = resources.Resource('mypartition', 20, None)
+        self.assertEqual(core.read_sbatch_file('filename')[0], res)
+
+    @patch("sutils.applications.assistbatch.core.open", my_mock_open(read_data=SAMPLE_FILE), create=True)
+    def test_returns_single_partition(self):
+        self.assertEqual(len(core.read_sbatch_file('filename')), 1)
+
+    @patch("sutils.applications.assistbatch.core.open", my_mock_open(read_data=SAMPLE_FILE_TWO_PARTITIONS), create=True)
+    def test_returns_two_partitions(self):
+        self.assertEqual(len(core.read_sbatch_file('filename')), 2)
+
+    @patch("sutils.applications.assistbatch.core.open", my_mock_open(read_data=SAMPLE_FILE_TWO_PARTITIONS), create=True)
+    def test_reads_two_partitions_correctly(self):
+        res1 = resources.Resource('mypartition', 20, None)
+        res2 = resources.Resource('mysecondpartition', 20, None)
+        self.assertEqual(core.read_sbatch_file('filename'), [res1, res2])
+    
+    @patch("sutils.applications.assistbatch.core.open", my_mock_open(read_data=SAMPLE_FILE_NODES), create=True)
+    def test_reads_nodes_correctly(self):
+        self.assertEqual(core.read_sbatch_file('filename')[0].nodes(), 2)
+
+    @patch("sutils.applications.assistbatch.core.open", my_mock_open(read_data=SAMPLE_FILE), create=True)
+    def test_missing_nodes_is_none(self):
+        self.assertEqual(core.read_sbatch_file('filename')[0].nodes(), None)
+
+
+# @patch("sutils.applications.assistbatch.core.slurm.sinfo_detail", Mock())
+# class TestSubmit(unittest.TestCase):
+#     @patch("sutils.applications.assistbatch.core.read_sbatch_file")
+#     def test_calls_read_sbatch_file(self, read):
+#         core.submit('myfilename')
+#         read.assert_called_once_with('myfilename')
+
+class TestWriteSbatchFile(unittest.TestCase):
     pass
+

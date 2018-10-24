@@ -10,10 +10,10 @@ if sys.version.startswith('2'):
     input = raw_input   # compatibility with Python2
 
 def submit(filename, firstmatch=False):
-    hwdata = slurm.sinfo_detail()
-
     # get requested cores and nodes from bash script
     requested_resources = read_sbatch_file(filename)
+
+    hwdata = slurm.sinfo_detail()
 
     idle_resources = []
     queued_resources = []
@@ -31,32 +31,36 @@ def submit(filename, firstmatch=False):
         #             +"partition {}. \nAborting.".format(partition))
     
 
-    opt_resource = None
     found = [res in idle_resources for res in requested_resources]
-    if np.prod(found):
+    if np.prod(found) and len(found) > 1:
         opt_resource = requested_resources[found.index(True)]
     else:
-        txt = get_resource_summary(idle_resources, queued_resources)
-        print(txt, end='')
-        selection_query = 'Select an option: '
-        error_msg = 'Please provide a number between {} and {}.'.format(
-            1, len(txt)
-        )
-        success = False
-        while not success:
-            try:
-                ind = int(input(selection_query))
-                success = True
-            except ValueError:
-                print(error_msg)
-
-        if ind < len(idle_resources):
-            opt_resource = ind - 1
-        else:
-            opt_resource = ind - len(idle_resources) - 1
+        summary_txt = get_resource_summary(idle_resources, queued_resources)
+        opt_resource = get_option_from_user(summary_txt, idle_resources, queued_resources)
     
     # write new numbers to script file
     # submit the job
+
+def get_option_from_user(txt, idle_resources, queued_resources):
+    print(txt, end='')
+    selection_query = 'Select an option: '
+    error_msg = 'Please provide a number between {} and {}.'.format(
+        1, len(txt)
+    )
+    success = False
+    while not success:
+        try:
+            ind = int(input(selection_query))
+            success = True
+        except ValueError:
+            print(error_msg)
+
+    if ind < len(idle_resources):
+        opt_resource = idle_resources[ind - 1]
+    else:
+        opt_resource = queued_resources[ind - len(idle_resources) - 1]
+
+    return opt_resource
 
 def find_optimal_resources(hwdata, requested_resource, idle=True):
     # filter partition
@@ -73,7 +77,7 @@ def find_optimal_resources(hwdata, requested_resource, idle=True):
 
 def read_sbatch_file(filename):
     nodes = None
-    ncpus = None
+    ntasks = None
     partitions = None
 
     with open(filename, 'r') as infile:
@@ -81,12 +85,20 @@ def read_sbatch_file(filename):
             if line.strip().startswith('#SBATCH'):
                 if 'nodes' in line:
                     nodes = int(line.split('=')[1])
-                elif 'ncpus' in line:
-                    ncpus = int(line.split('=')[1])
+                elif 'ntasks' in line:
+                    ntasks = int(line.split('=')[1])
                 elif 'partition' in line:
-                    partitions = line.split('=')[1].split(',')
+                    partitions = line.split('=')[1].strip().split(',')
 
-    return [resources.Resource(p, ncpus, nodes) for p in partitions]
+    if partitions is None:
+        raise RuntimeError("partition not specified")
+    if ntasks is None:
+        raise RuntimeError("ntasks not specified")
+
+    return [resources.Resource(p, ntasks, nodes) for p in partitions]
+
+def write_sbatch_file(filename, resource):
+     pass
 
 def get_resource_summary(idle, queued):
     output_txt = []

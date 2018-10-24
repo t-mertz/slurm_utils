@@ -156,6 +156,9 @@ class TestResource(unittest.TestCase):
 
         self.assertNotEqual(res1, res2)
 
+    def test_repr_returns_dict(self):
+        res = resources.Resource('mypartition', 12, 14)
+        self.assertEqual(repr(res), "<Resource object, partition=mypartition, cpus=12, nodes=14>")
 
 class TestSubsetInternal(unittest.TestCase):
     def test_empty_and_zero_returns_empty(self):
