@@ -19,10 +19,12 @@ if int(PY_VER[0]) < 3:
     import exceptions
 
 
+
 VERSION_MAJOR = version.VERSION_MAJOR
 VERSION_MINOR = version.VERSION_MINOR
 VERSION_PATCH = version.VERSION_PATCH
 VERSION = version.version()
+
 AUTHOR = "Thomas Mertz"
 COPYRIGHT_YEARS = sorted([2016, 2018])
 COPYRIGHT_RANGE = "{}-{}".format(COPYRIGHT_YEARS[0], COPYRIGHT_YEARS[-1])
@@ -189,7 +191,7 @@ class JobStatusCounter(Jobs):
 
 class ParameterIterator(object):
 
-    def __init__(self):
+    def __init__(self, root_path=None, config_file=None):
         self._supdate = None
         self._settings = None
         self._params = None
@@ -200,12 +202,24 @@ class ParameterIterator(object):
         self._pformat_list_all = None
 
         self.setup_default_settings()
+        root_path = "." if root_path is None else root_path
+        root_path = os.path.abspath(root_path)
+        self._settings.update({'init_path': os.getcwd()})
+        config_file = config_file if config_file is not None else self._settings['config_path'] 
+        self._settings.update({'config_path': os.path.join(root_path, config_file)})
+        self._settings.update({'root_path': root_path})
         self.update_ini_settings() # we need this to setup the parameters before we can fix 'par_in_dirname'
         self.fix_settings_format()
         self.create_par_in_dirname_inds()
 
         self.create_dformat_str()
         self.create_pformat_str()
+
+    def __del__(self):
+        try:
+            os.chdir(self._settings['init_path']) # make sure we leave the cwd unchanged
+        except:
+            pass
 
     def fix_settings_format(self):
 
@@ -1262,7 +1276,7 @@ class DataProcessor(ParameterIterator):
     def execute(self, job_idx, plist):
         dirname = self.get_dirname(plist, job_idx)
         try:
-            os.chdir(dirname) # do we want to change current working directory?
+            os.chdir(os.path.join(self._settings['root_path'], dirname)) # do we want to change current working directory?
         except OSError:
             print("Directory {} not found. Found the following:".format(dirname), file=sys.stderr)
             for d in sorted(util.listdirs('.')):

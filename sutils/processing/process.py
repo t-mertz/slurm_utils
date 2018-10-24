@@ -7,9 +7,9 @@ import os
 from ..core import core
 from . import fargs
 
-def process_py(func):
+def process_py(func, root_path=".", config_file="config.ini"):
     try:
-        proc = get_processor("python", func)
+        proc = get_processor("python", func, root_path=root_path, config_file=config_file)
     except ValueError as e:
         sys.stdout.write("An error occurred: " + str(e) + "\n")
         sys.exit(1)
@@ -27,8 +27,8 @@ def process_exec(filename):
 
 class DataProcessor(core.DataProcessor):
     """Run specified Python function on data."""
-    def __init__(self, func):
-        super(DataProcessor, self).__init__()
+    def __init__(self, func, root_path=None, config_file=None):
+        super(DataProcessor, self).__init__(root_path=root_path, config_file=config_file)
         #check if func takes three arguments!
         if fargs.get_number_fargs(func) == 3:
             self.process = func
@@ -38,12 +38,12 @@ class DataProcessor(core.DataProcessor):
     def run(self):
         self.iterate()
 
-def get_processor(script_type, func):
+def get_processor(script_type, func, root_path=".", config_file="config.ini"):
     """Factory function for processors"""
     if script_type.lower() == 'python':
         # this can raise an exception.
         # ok, since we expect this to be run from within an external Python script anyhow
-        return DataProcessor(func)
+        return DataProcessor(func, root_path, config_file)
     elif script_type.lower() == 'external':
         try:
             return ExternalProcessor(func)
@@ -61,6 +61,7 @@ def get_processor(script_type, func):
         except Exception as e:
             sys.stderr.write(str(e))
             sys.exit(1)
+
     else:
         raise NotImplementedError(script_type)
 
