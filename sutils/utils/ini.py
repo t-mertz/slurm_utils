@@ -25,11 +25,13 @@ Everything following a line ';;;' is ignored.
 
 """
 import sys
+import os
 PY_VERSION = sys.version
 if int(PY_VERSION[0]) < 3:
     import exceptions
 import numpy as np
-import parameters
+from . import parameters
+from . import util
 
 class IniFormatError(Exception):
     """
@@ -40,6 +42,126 @@ class IniFormatError(Exception):
     
     def __str__(self):
         return self._value
+
+class SectionError(Exception):
+    pass
+
+class AttributeError(Exception):
+    pass
+
+
+def parse_line(line):
+    """Parse a single line.
+
+    :return result: str if the line contains a section header,
+                    tuple if the line contains an attribute assignement,
+                    None otherwise (empty lines, comments)
+    :rtype result: str, tuple, None
+    """
+    tmp = line.split(';')[0].strip()    # ignore comments (everything after ;)
+    if tmp.startswith('['):
+        # section header
+        if not tmp.endswith(']'):
+            raise SectionError
+        name = tmp[1:-1]    # section name
+        return name
+    elif "=" in tmp:
+        if tmp.count("=") > 1:
+            raise AttributeError
+        tmp = tmp.split("=")
+        name = tmp[0].strip()
+        value = tmp[1].strip()
+        return (name, value)
+    elif len(tmp) > 0:
+        raise IniFormatError
+    else:
+        return None
+
+def ini2dict(path):
+    """Read ini file and output attributes in a dictionary.
+    Each key will refer to one section, which is stored in its own dictionary as the value.
+    """
+    data = dict()
+    cur_section = None
+    with open(path, 'r') as ini_file:
+        for line_number,line in enumerate(ini_file):
+            try:
+                res = parse_line(line)
+            except SectionError:
+                raise IniFormatError(
+                    "Section didn't end properly. Must be enclosed in [<section>]: {line:s}, line: {line_number:d}" \
+                    .format(
+                        line=line,
+                        line_number=line_number
+                        )
+                    )
+            except AttributeError:
+                raise IniFormatError(
+                    "Line {}: Couldn't interpret line as (attribute, value) pair. Make sure to use the format `attr = val`." \
+                    .format(line_number)
+                )
+            except IniFormatError:
+                raise IniFormatError(
+                    "Line {}: Invalid syntax. Value: `{}`".format(line_number, line)
+                )
+            
+            if res is None:
+                # empty line or comment
+                pass
+            elif isinstance(res, str):
+                # new section header
+                data[res] = dict()
+                cur_section = res
+            else:
+                # new attribute
+                if cur_section is None:
+                    raise IniFormatError("Line {}: Attribute defined outside of section.".format(line_number))
+                data[cur_section][res[0]] = res[1]
+
+            if ';;;' in line:
+                # ignore rest
+                break
+            
+    return data
+
+def dict2ini(ini_dict, path, desc=None):
+    """Store data from :ini_dict: to ini file :path:.
+    
+    :desc: can be another dict like :ini_dict: only containing descriptions instead of values.
+    """
+
+    if not isinstance(ini_dict, dict):
+        raise TypeError("Dictionary expected, got {}.".format(str(type(ini_dict))))
+    
+    dir_path = os.path.abspath(os.path.dirname(path))  # make absolute path
+    filename = os.path.basename(path)                  # filename
+
+    if util.get_extension(filename) != 'ini':
+        filename += '.ini'
+
+    with open(os.path.join(dir_path, filename), 'w') as outfile:
+        for section, attributes in ini_dict.items():
+            outfile.write("[{}]\n".format(section))
+            for attr_name, attr_value in attributes.items():
+                try:
+                    description = desc[section][attr_name]
+                except KeyError:
+                    description = None
+                if description is None:
+                    outfile.write("{name}={value}\n".format(
+                                                            name=attr_name,
+                                                            value=attr_value,
+                                                            )
+                            )
+                else:
+                    outfile.write("{name}={value}{space};{desc}\n".format(
+                                                            name=attr_name,
+                                                            value=attr_value,
+                                                            space=" "*10,
+                                                            desc=description
+                                                            )
+                            )
+            outfile.write("\n") # newline
 
 
 def read_ini(path):
@@ -229,3 +351,13 @@ def str2list(s):
 def str2bool(s):
     """Convert string to bool."""
     return s.strip().lower() == "true"
+
+def make_ini_file(lst, dest):
+    """Save `lst` as an ini file to `dest`."""
+    with open(dest, "w") as outfile:
+        for grp in lst:
+            outfile.write("[{}]".format(grp.name), end="\n")
+            for opt in grp.members:
+                outfile.write("{} = {} {}".format(opt.name, opt.default_value, opt.description), end="\n")
+            outfile.write("\n")
+        

@@ -1,6 +1,6 @@
 from testenv import TestCase
 
-import ../core/scancel as scancel
+from ..core import scancel
 
 class ScancelTests(TestCase):
     """

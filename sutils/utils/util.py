@@ -27,6 +27,12 @@ def fexists(path):
         return True
     return False
 
+def get_extension(path):
+    """Get the file extension."""
+    tmp = os.path.basename(path)
+    ext = tmp.split('.')[-1]
+    return "" if len(ext) == 1 else ext
+
 def funiquename(path, extension=""):
     """
     Create a unique filename by appending a number separated by an underscore

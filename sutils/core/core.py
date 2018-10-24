@@ -4,6 +4,7 @@ import numpy as np
 import sys, os
 import logging
 from sutils.utils import ini, common, util
+from .. import version
 #import ini
 #import lacommon
 #import common
@@ -18,10 +19,12 @@ if int(PY_VER[0]) < 3:
     import exceptions
 
 
-VERSION_MAJOR = 0
-VERSION_MINOR = 2
-VERSION_PATCH = 2 
-VERSION = "{}.{}.{}".format(VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)
+
+VERSION_MAJOR = version.VERSION_MAJOR
+VERSION_MINOR = version.VERSION_MINOR
+VERSION_PATCH = version.VERSION_PATCH
+VERSION = version.version()
+
 AUTHOR = "Thomas Mertz"
 COPYRIGHT_YEARS = sorted([2016, 2018])
 COPYRIGHT_RANGE = "{}-{}".format(COPYRIGHT_YEARS[0], COPYRIGHT_YEARS[-1])
