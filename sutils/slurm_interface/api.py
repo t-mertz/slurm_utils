@@ -292,6 +292,19 @@ class SinfoData(object):
         self._copy_info_data(inst, inds=inds)
 
         return inst
+
+    def filter_idle(self):
+        """Create a new instance containing only idle nodes."""
+        inst = SinfoData()
+        inds = np.argwhere(
+            np.logical_and(
+                self._info_data['idlecpus'] == self._info_data['allcpus'],
+                self._info_data['state'] == 'idle'
+                )
+        ).flatten()
+        self._copy_info_data(inst, inds=inds)
+
+        return inst
     
     def mem_per_cpu(self):
         return self._info_data['memory'] / self._info_data['allcpus']

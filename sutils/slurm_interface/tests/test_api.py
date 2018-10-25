@@ -299,6 +299,23 @@ class TestSinfoData(unittest.TestCase):
 
         self.assertNotEqual(infodat1, infodat2)
 
+    def test_filter_idle(self):
+        info_str = "node01  partition  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n" \
+                +"node01  partition1  1.00  7/24/1/32  2:8:2  alloc  16384  16000  10  infiniband\n"\
+                +"node02  partition1  1.00  32/0/0/32  2:8:2  alloc  16384  16000  10  infiniband\n"
+        infodat = slurm.SinfoData(info_str)
+
+        filtered = infodat.filter_idle()
+        self.assertEqual(filtered, slurm.SinfoData(info_str.split('\n')[-1]))
+
+    def test_filter_idle_returns_nodes_without_other(self):
+        info_str = "node01  partition  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n" \
+                +"node01  partition1  1.00  16/0/16/32  2:8:2  alloc  16384  16000  10  infiniband\n"\
+                +"node02  partition1  1.00  32/0/0/32  2:8:2  alloc  16384  16000  10  infiniband\n"
+        infodat = slurm.SinfoData(info_str)
+
+        filtered = infodat.filter_idle()
+        self.assertEqual(filtered, slurm.SinfoData(info_str.split('\n')[-1]))
 
 class Test_sinfo_detail(unittest.TestCase):
     @patch("sutils.slurm_interface.api.sinfo")
