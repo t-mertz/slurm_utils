@@ -1,5 +1,5 @@
 from ...slurm_interface import api as slurm
-from ...test import test
+#from ...test import test
 from ...utils.util import srange
 import sys
 
@@ -8,8 +8,8 @@ def get_jobs():
     user.
     """
     retval, res = slurm.squeue_user()
-    if test.testmode():
-        return list(srange(3))
+    #if test.testmode():
+    #    return list(srange(3))
     joblist = res.get_ids()
     return sorted(joblist)
 

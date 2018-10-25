@@ -1,5 +1,6 @@
 import unittest
 from unittest.mock import Mock, patch
+import subprocess
 
 import numpy as np
 
@@ -35,6 +36,11 @@ class TestResult(unittest.TestCase):
         self.assertEqual(len(slurm.Result("")), 0)
 
 class TestSinfoData(unittest.TestCase):
+
+    def setUp(self):
+        self.info_str = "node01  partition  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n" \
+                 +"node02  partition1  1.00  7/8/1/16  2:8:2  alloc  16384  16000  10  infiniband\n"
+
     def test_empty_constructor(self):
         infodat = slurm.SinfoData()
         
@@ -250,6 +256,22 @@ class TestSinfoData(unittest.TestCase):
             self.assertTrue(np.all(filtered._info_data[key] == val))
 
 
+    def test_mem_per_cpu(self):
+        infodat = slurm.SinfoData(self.info_str)
+        self.assertTrue(
+            np.all(
+                infodat.mem_per_cpu() == np.array([8192/4., 16384/16.])
+            )
+        )
+
+    def test_freemem_per_idlecpu(self):
+        infodat = slurm.SinfoData(self.info_str)
+        self.assertTrue(
+            np.all(
+                infodat.freemem_per_idlecpu() == np.array([8000/4., 16000/8.])
+            )
+        )
+
 class Test_sinfo_detail(unittest.TestCase):
     @patch("sutils.slurm_interface.api.sinfo")
     def test_calls_sinfo(self, sinfo):
@@ -284,3 +306,25 @@ class Test_sinfo_detail(unittest.TestCase):
         }
         for key, val in dat.items():
             self.assertTrue(np.all(retval._info_data[key] == val))
+
+class TestRunCommand(unittest.TestCase):
+    def test_return_code_0_for_ls(self):
+        res = slurm.run_command('ls', [])
+        self.assertEqual(res[0], 0)
+    
+    def test_return_code_0_for_ls_all(self):
+        res = slurm.run_command('ls', ['-a'])
+        self.assertEqual(res[0], 0)
+
+    def test_return_code_1_for_unknown_command(self):
+        cmd = 'myrandomcommandsurelydoesntexist'
+        self.assertRaises(FileNotFoundError, slurm.run_command, cmd, [])
+
+    @patch("subprocess.Popen")
+    def test_popen_called(self, popen):
+        process_mock = Mock()
+        attrs = {'communicate.return_value': ('output', 'error')}
+        process_mock.configure_mock(**attrs)
+        popen.return_value = process_mock
+        slurm.run_command('command', ['arg1'])
+        popen.assert_called_once_with(['command', 'arg1'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)

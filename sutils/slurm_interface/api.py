@@ -23,15 +23,15 @@ SINFO_DETAIL_FORMAT = "nodehost:.30,"\
                     + "features:.50"
 
 def run_command(cmd, args):
-    if test.testmode():
+    if False:#test.testmode():
         test.cmd_buffer.write(cmd + " " + " ".join(args))
         stdout = ""
         stderr = ""
     else:
         p = subprocess.Popen([cmd] + args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        p.wait()
+        #p.wait()
         stdout, stderr = p.communicate()
-        p.terminate()
+        #p.terminate()
 
     retval = 0 if len(stderr) == 0 else 1
 
@@ -80,9 +80,9 @@ def _sinfo(format=None, node=False, noheader=False):
     retval, stdout, stderr = run_command('sinfo', args)
 
     if retval != 0:
-        raise RuntimeError("Call to `sinfo` failed: \n" + stderr.decode('utf-8'))
+        raise RuntimeError("Call to `sinfo` failed: \n" + stderr)
     
-    return stdout.decode('utf-8')
+    return stdout
 
 def sinfo(format=None, node=False, noheader=False):
     """Run sinfo and return processed output."""
@@ -285,5 +285,8 @@ class SinfoData(object):
 
         return inst
         
+    def mem_per_cpu(self):
+        return self._info_data['memory'] / self._info_data['allcpus']
 
-
+    def freemem_per_idlecpu(self):
+        return self._info_data['freememory'] / self._info_data['idlecpus']
