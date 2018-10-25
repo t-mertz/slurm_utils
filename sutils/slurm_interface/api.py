@@ -280,13 +280,27 @@ class SinfoData(object):
     def filter_cpus(self, n):
         """Create a new instance containing only nodes with at least n cpus."""
         inst = SinfoData()
-        inds = np.argwhere(self._info_data['allcpus'] >= n)
+        inds = np.argwhere(self._info_data['allcpus'] >= n).flatten()
         self._copy_info_data(inst, inds=inds)
 
         return inst
         
+    def filter_memory(self, m):
+        """Create a new instance containing only nodes with at least m MB of memory."""
+        inst = SinfoData()
+        inds = np.argwhere(self._info_data['memory'] >= m).flatten()
+        self._copy_info_data(inst, inds=inds)
+
+        return inst
+    
     def mem_per_cpu(self):
         return self._info_data['memory'] / self._info_data['allcpus']
 
     def freemem_per_idlecpu(self):
         return self._info_data['freememory'] / self._info_data['idlecpus']
+
+    def __eq__(self, obj):
+        res = True
+        for key, val in self._info_data.items():
+            res *= np.all(obj[key] == val)
+        return res

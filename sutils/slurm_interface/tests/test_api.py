@@ -272,6 +272,34 @@ class TestSinfoData(unittest.TestCase):
             )
         )
 
+    def test_filter_memory_0_returns_copy(self):
+        infodat = slurm.SinfoData(self.info_str)
+
+        filtered = infodat.filter_memory(0)
+        
+        self.assertEqual(infodat, filtered)
+
+    def test_filter_memory_10000_returns_only_second_node(self):
+        infodat = slurm.SinfoData(self.info_str)
+
+        filtered = infodat.filter_memory(10000)
+        infodat1 = slurm.SinfoData(self.info_str.split('\n')[1])
+        
+        self.assertEqual(infodat1, filtered)
+
+    def test_copy_is_equal(self):
+        infodat1 = slurm.SinfoData(self.info_str)
+        infodat2 = slurm.SinfoData(self.info_str)
+
+        self.assertEqual(infodat1, infodat2)
+    
+    def test_original_and_filtered_are_not_equal(self):
+        infodat1 = slurm.SinfoData(self.info_str)
+        infodat2 = infodat1.filter_cpus(5)
+
+        self.assertNotEqual(infodat1, infodat2)
+
+
 class Test_sinfo_detail(unittest.TestCase):
     @patch("sutils.slurm_interface.api.sinfo")
     def test_calls_sinfo(self, sinfo):
