@@ -77,13 +77,15 @@ def find_optimal_resources(hwdata, requested_resource, idle=True):
         return [resources.Resource(
             requested_resource.partition(),
             opt[0],
-            opt[1]
+            opt[1],
+            requested_resource.memory()
         )]
 
 def read_sbatch_file(filename):
     nodes = None
     ntasks = None
     partitions = None
+    mem = None
 
     with open(filename, 'r') as infile:
         for line in infile:
@@ -94,13 +96,15 @@ def read_sbatch_file(filename):
                     ntasks = int(line.split('=')[1])
                 elif 'partition' in line:
                     partitions = line.split('=')[1].strip().split(',')
+                elif 'mem=' in line:
+                    mem = line.split('=')[1].strip().split(',')
 
     if partitions is None:
         raise RuntimeError("partition not specified")
     if ntasks is None:
         raise RuntimeError("ntasks not specified")
 
-    return [resources.Resource(p, ntasks, nodes) for p in partitions]
+    return [resources.Resource(p, ntasks, nodes, mem) for p in partitions]
 
 def write_sbatch_file(filename, resource):
      pass

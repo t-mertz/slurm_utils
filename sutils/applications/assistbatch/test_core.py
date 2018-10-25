@@ -17,23 +17,23 @@ class TestGetResourceSummary(unittest.TestCase):
         self.assertEqual(core.get_resource_summary(idle, queued), [])
         
     def test_print_one_idle(self):
-        idle = [resources.Resource('partition', 2, 1)]
+        idle = [resources.Resource('partition', 2, 1, None)]
         queued = []
         ret = ["(1) partition:       partition, CPUs:    2, nodes:  1, (idle)\n"]
         self.assertEqual(core.get_resource_summary(idle, queued), ret)
 
     def test_print_one_queued(self):
         idle = []
-        queued = [resources.Resource('partition', 2, 1)]
+        queued = [resources.Resource('partition', 2, 1, None)]
         ret = ["(1) partition:       partition, CPUs:    2, nodes:  1, (pending)\n"]
         self.assertEqual(core.get_resource_summary(idle, queued), ret)
 
     def test_print_two_idle_queued(self):
-        idle = [resources.Resource('partition3', 4, 2),
-                resources.Resource('partition4', 1, 2)
+        idle = [resources.Resource('partition3', 4, 2, None),
+                resources.Resource('partition4', 1, 2, None)
                ]
-        queued = [resources.Resource('partition', 2, 1),
-                  resources.Resource('partition1', 3, 1)
+        queued = [resources.Resource('partition', 2, 1, None),
+                  resources.Resource('partition1', 3, 1, None)
                  ]
         ret = [
             "(1) partition:      partition3, CPUs:    4, nodes:  2, (idle)\n",
@@ -51,7 +51,7 @@ class TestFindOptimalResources(unittest.TestCase):
 
     @patch("sutils.applications.assistbatch.core.slurm.SinfoData.filter_partition")
     def test_calls_filter_partition(self, filter_partition):
-        req = resources.Resource('partition', 1, 1)
+        req = resources.Resource('partition', 1, 1, None)
         filter_partition.return_value = slurm.SinfoData(self.sinfo_stdout.split('\n')[0])
         core.find_optimal_resources(self.infodat, req, idle=True)
 
@@ -64,7 +64,7 @@ class TestFindOptimalResources(unittest.TestCase):
         filter_partition.return_value = part_infodat
         find_resources.return_value = [1, 2]
 
-        req = resources.Resource('partition', 1, 1)
+        req = resources.Resource('partition', 1, 1, None)
         core.find_optimal_resources(self.infodat, req, idle=True)
 
         find_resources.assert_called_once_with(part_infodat, 1, idle=True)
@@ -72,9 +72,9 @@ class TestFindOptimalResources(unittest.TestCase):
     @patch("sutils.applications.assistbatch.core.resources.find_resources")
     def test_returns_optimal_resource(self, find_resources):
         find_resources.return_value = (10, 2)
-        req = resources.Resource('partition', 1, 1)
+        req = resources.Resource('partition', 1, 1, None)
         ret = core.find_optimal_resources(self.infodat, req, idle=True)
-        opt = resources.Resource('partition', 10, 2)
+        opt = resources.Resource('partition', 10, 2, None)
         self.assertEqual(ret, [opt])
 
 SAMPLE_FILE = ''.join([
@@ -122,7 +122,7 @@ class TestReadSbatchFile(unittest.TestCase):
     
     @patch("sutils.applications.assistbatch.core.open", my_mock_open(read_data=SAMPLE_FILE), create=True)
     def test_reads_single_partition_correctly(self):
-        res = resources.Resource('mypartition', 20, None)
+        res = resources.Resource('mypartition', 20, None, None)
         self.assertEqual(core.read_sbatch_file('filename')[0], res)
 
     @patch("sutils.applications.assistbatch.core.open", my_mock_open(read_data=SAMPLE_FILE), create=True)
@@ -135,8 +135,8 @@ class TestReadSbatchFile(unittest.TestCase):
 
     @patch("sutils.applications.assistbatch.core.open", my_mock_open(read_data=SAMPLE_FILE_TWO_PARTITIONS), create=True)
     def test_reads_two_partitions_correctly(self):
-        res1 = resources.Resource('mypartition', 20, None)
-        res2 = resources.Resource('mysecondpartition', 20, None)
+        res1 = resources.Resource('mypartition', 20, None, None)
+        res2 = resources.Resource('mysecondpartition', 20, None, None)
         self.assertEqual(core.read_sbatch_file('filename'), [res1, res2])
     
     @patch("sutils.applications.assistbatch.core.open", my_mock_open(read_data=SAMPLE_FILE_NODES), create=True)

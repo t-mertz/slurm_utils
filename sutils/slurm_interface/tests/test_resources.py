@@ -113,16 +113,20 @@ class TestFindResources(unittest.TestCase):
 
 class TestResource(unittest.TestCase):
     def test_partition_can_be_retrieved(self):
-        res = resources.Resource('partition', 10, 2)
+        res = resources.Resource('partition', 10, 2, None)
         self.assertEqual(res.partition(), 'partition')
     
     def test_cpus_can_be_retrieved(self):
-        res = resources.Resource('partition', 10, 2)
+        res = resources.Resource('partition', 10, 2, None)
         self.assertEqual(res.cpus(), 10)
     
     def test_nodes_can_be_retrieved(self):
-        res = resources.Resource('partition', 10, 2)
+        res = resources.Resource('partition', 10, 2, None)
         self.assertEqual(res.nodes(), 2)
+    
+    def test_mem_can_be_retrieved(self):
+        res = resources.Resource('partition', 10, 2, 1000)
+        self.assertEqual(res.memory(), 1000)
     
     # def test_zero_init_raises_ValueError(self):
     #     self.assertRaises(ValueError, resources.Resource, [])
@@ -133,32 +137,38 @@ class TestResource(unittest.TestCase):
     #     self.assertEqual(len(res), 3)
 
     def test_eq_returns_true_for_copy(self):
-        res1 = resources.Resource('partition', 2, 3)
-        res2 = resources.Resource('partition', 2, 3)
+        res1 = resources.Resource('partition', 2, 3, None)
+        res2 = resources.Resource('partition', 2, 3, None)
 
         self.assertEqual(res1, res2)
 
     def test_eq_returns_false_for_nonequal_nodes(self):
-        res1 = resources.Resource('partition', 1, 3)
-        res2 = resources.Resource('partition', 1, 2)
+        res1 = resources.Resource('partition', 1, 3, None)
+        res2 = resources.Resource('partition', 1, 2, None)
 
         self.assertNotEqual(res1, res2)
     
     def test_eq_returns_false_for_nonequal_cpus(self):
-        res1 = resources.Resource('partition', 1, 3)
-        res2 = resources.Resource('partition', 2, 3)
+        res1 = resources.Resource('partition', 1, 3, None)
+        res2 = resources.Resource('partition', 2, 3, None)
 
         self.assertNotEqual(res1, res2)
 
     def test_eq_returns_false_for_nonequal_partitions(self):
-        res1 = resources.Resource('partition', 1, 3)
-        res2 = resources.Resource('partition1', 1, 3)
+        res1 = resources.Resource('partition', 1, 3, None)
+        res2 = resources.Resource('partition1', 1, 3, None)
+
+        self.assertNotEqual(res1, res2)
+
+    def test_eq_returns_false_for_nonequal_mem(self):
+        res1 = resources.Resource('partition', 1, 3, 1000)
+        res2 = resources.Resource('partition', 1, 3, 500)
 
         self.assertNotEqual(res1, res2)
 
     def test_repr_returns_dict(self):
-        res = resources.Resource('mypartition', 12, 14)
-        self.assertEqual(repr(res), "<Resource object, partition=mypartition, cpus=12, nodes=14>")
+        res = resources.Resource('mypartition', 12, 14, 100)
+        self.assertEqual(repr(res), "<Resource object, partition=mypartition, cpus=12, nodes=14, mem=100>")
 
 class TestSubsetInternal(unittest.TestCase):
     def test_empty_and_zero_returns_empty(self):

@@ -119,10 +119,11 @@ def _subset_internal(cpus, n, _buf=None):
 
 class Resource(object):
     """Container for collection of CPUs."""
-    def __init__(self, partition, cpus, nodes):
+    def __init__(self, partition, cpus, nodes, mem):
         self._cpus = cpus
         self._partition = partition
         self._nodes = nodes
+        self._mem = mem
 
     def partition(self):
         return self._partition
@@ -132,20 +133,25 @@ class Resource(object):
     
     def nodes(self):
         return self._nodes
+
+    def memory(self):
+        return self._mem
     
     def __eq__(self, obj):
         if isinstance(obj, Resource):
             cond1 = self._cpus == obj._cpus
             cond2 = self._partition == obj._partition
             cond3 = self._nodes == obj._nodes
-            return cond1 and cond2 and cond3
+            cond4 = self._mem == obj._mem
+            return cond1 and cond2 and cond3 and cond4
         else:
             False
 
     def __repr__(self):
-        format_str = "<Resource object, partition={partition}, cpus={cpus}, nodes={nodes}>"
+        format_str = "<Resource object, partition={partition}, cpus={cpus}, nodes={nodes}, mem={mem}>"
         return format_str.format(
             partition=self._partition,
             cpus=self._cpus,
-            nodes=self._nodes
+            nodes=self._nodes,
+            mem=self._mem,
         )
