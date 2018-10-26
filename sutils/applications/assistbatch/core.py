@@ -110,7 +110,30 @@ def read_sbatch_file(filename):
     return [resources.Resource(p, ntasks, nodes, mem) for p in partitions]
 
 def write_sbatch_file(filename, resource):
-    pass
+    setmap = {'partition': False, 'ntasks': False, 'nodes': False}
+    with open(filename, 'r') as infile:
+        with open('outfilename', 'w') as outfile:
+            for line in infile:
+                newline = line
+                if 'partition' in line:
+                    newline = '#SBATCH --partition={}\n'.format(resource.partition())
+                    setmap['partition'] = True
+                elif 'ntasks' in line:
+                    newline = '#SBATCH --ntasks={}\n'.format(resource.cpus())
+                    setmap['ntasks'] = True
+                elif 'nodes' in line and resource.nodes() is not None:
+                    newline = '#SBATCH --nodes={}\n'.format(resource.nodes())
+                    setmap['nodes'] = True
+                elif 'mem' in line and resource.memory() is not None:
+                    newline = '#SBATCH --mem={}\n'.format(resource.memory())
+                if len(line.strip()) > 0 and '#' not in line:
+                    # slurm configuration is over
+                    for key, val in setmap.items():
+                        if not val:
+                            if key == 'nodes':
+                                outfile.write('#SBATCH --{key}={value}\n'.format(key=key, value=resource.nodes()))
+                outfile.write(newline)
+                
 
 def get_resource_summary(idle, queued):
     output_txt = []

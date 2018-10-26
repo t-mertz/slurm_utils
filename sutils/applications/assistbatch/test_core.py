@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch, mock_open, MagicMock, Mock
+from unittest.mock import patch, mock_open, MagicMock, Mock, call
 
 from ...slurm_interface import resources as resources
 from ...slurm_interface import api as slurm
@@ -168,7 +168,92 @@ class TestReadSbatchFile(unittest.TestCase):
 #         core.submit('myfilename')
 #         read.assert_called_once_with('myfilename')
 
-@patch("sutils.applications.assistbatch.core.open", mock_open(), create=True)
 class TestWriteSbatchFile(unittest.TestCase):
-    pass
+    @patch("sutils.applications.assistbatch.core.open", my_mock_open(read_data=SAMPLE_FILE), create=True)
+    def test_calls_open_read_once(self):
+        #myopen =  my_mock_open(read_data=SAMPLE_FILE)
+        core.write_sbatch_file('infilename', resources.Resource('partition', 1, 1, 1000))
+        self.assertEqual(core.open.mock_calls.count(call('infilename', 'r')), 1)
+    
+    @patch("sutils.applications.assistbatch.core.open", my_mock_open(read_data=SAMPLE_FILE), create=True)
+    def test_calls_open_write_once(self):
+        #myopen =  my_mock_open(read_data=SAMPLE_FILE)
+        core.write_sbatch_file('infilename', resources.Resource('partition', 1, 1, 1000))
+        self.assertEqual(core.open.mock_calls.count(call('outfilename', 'w')), 1)
+    
+    @patch("sutils.applications.assistbatch.core.open", my_mock_open(read_data=SAMPLE_FILE), create=True)
+    def test_calls_write_once_per_line(self):
+        #myopen =  my_mock_open(read_data=SAMPLE_FILE)
+        core.write_sbatch_file('infilename', resources.Resource('mynewpartition', 1, 1, 1000))
+        calls = [
+            call('infilename', 'r'),
+            call().__enter__(),
+            call('outfilename', 'w'),
+            call().__enter__(),
+            call().readline(),
+            call().write("#!/bin/sh\n"),
+            call().readline(),
+            call().write("#SBATCH --partition=mynewpartition\n"),
+            call().readline(),
+            call().write("#SBATCH --ntasks=1\n"),
+            call().readline(),
+            call().write("#SBATCH --nodes=1\n"),
+            call().write("sleep 1\n"),
+            call().readline(),
+            call().__exit__(None, None, None),
+            call().__exit__(None, None, None)
+        ]
+        core.open.assert_has_calls(calls)
+        
 
+    @patch("sutils.applications.assistbatch.core.open", my_mock_open(read_data=SAMPLE_FILE_NODES), create=True)
+    def test_calls_write_once_per_line_with_nodes(self):
+        #myopen =  my_mock_open(read_data=SAMPLE_FILE)
+        core.write_sbatch_file('infilename', resources.Resource('mynewpartition', 1, 1, 1000))
+        calls = [
+            call('infilename', 'r'),
+            call().__enter__(),
+            call('outfilename', 'w'),
+            call().__enter__(),
+            call().readline(),
+            call().write("#!/bin/sh\n"),
+            call().readline(),
+            call().write("#SBATCH --partition=mynewpartition\n"),
+            call().readline(),
+            call().write("#SBATCH --ntasks=1\n"),
+            call().readline(),
+            call().write("#SBATCH --nodes=1\n"),
+            call().readline(),
+            call().write("sleep 1\n"),
+            call().readline(),
+            call().__exit__(None, None, None),
+            call().__exit__(None, None, None)
+        ]
+        core.open.assert_has_calls(calls)
+
+    @patch("sutils.applications.assistbatch.core.open", my_mock_open(read_data=SAMPLE_FILE_MEM), create=True)
+    def test_calls_write_once_per_line_with_mem(self):
+        #myopen =  my_mock_open(read_data=SAMPLE_FILE)
+        core.write_sbatch_file('infilename', resources.Resource('mynewpartition', 1, 1, 1000))
+        calls = [
+            call('infilename', 'r'),
+            call().__enter__(),
+            call('outfilename', 'w'),
+            call().__enter__(),
+            call().readline(),
+            call().write("#!/bin/sh\n"),
+            call().readline(),
+            call().write("#SBATCH --partition=mynewpartition\n"),
+            call().readline(),
+            call().write("#SBATCH --ntasks=1\n"),
+            call().readline(),
+            call().write("#SBATCH --nodes=1\n"),
+            call().readline(),
+            call().write("#SBATCH --mem=1000\n"),
+            call().readline(),
+            call().write("sleep 1\n"),
+            call().readline(),
+            call().__exit__(None, None, None),
+            call().__exit__(None, None, None)
+        ]
+        core.open.assert_has_calls(calls)
