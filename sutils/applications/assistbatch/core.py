@@ -36,6 +36,9 @@ def submit(filename, firstmatch=False):
     if np.prod(found) and len(found) > 1:
         opt_resource = requested_resources[found.index(True)]
     else:
+        for rres in queued_resources:
+            if rres in idle_resources:
+                queued_resources.remove(rres)   # remove duplicates, prefer idle
         summary_txt = get_resource_summary(idle_resources, queued_resources)
         opt_resource = get_option_from_user(summary_txt, idle_resources, queued_resources)
     
@@ -107,7 +110,7 @@ def read_sbatch_file(filename):
     return [resources.Resource(p, ntasks, nodes, mem) for p in partitions]
 
 def write_sbatch_file(filename, resource):
-     pass
+    pass
 
 def get_resource_summary(idle, queued):
     output_txt = []

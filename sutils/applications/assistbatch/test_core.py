@@ -155,6 +155,7 @@ class TestReadSbatchFile(unittest.TestCase):
 #         core.submit('myfilename')
 #         read.assert_called_once_with('myfilename')
 
+@patch("sutils.applications.assistbatch.core.open", mock_open(), create=True)
 class TestWriteSbatchFile(unittest.TestCase):
     pass
 
