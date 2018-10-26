@@ -257,3 +257,66 @@ class TestWriteSbatchFile(unittest.TestCase):
             call().__exit__(None, None, None)
         ]
         core.open.assert_has_calls(calls)
+
+class TestGetOptionFromUser(unittest.TestCase):
+    @patch("sutils.applications.assistbatch.core.input")
+    def test_prints_resource_summary(self, mock_input):
+        idle = [resources.Resource('partition1', 1, 2, 3)]
+        queued = [resources.Resource('partition2', 4, 5, 6)]
+        txt = ['output_of\n', 'get_resource_summary\n']
+        mock_input.return_value = '1'
+        with patch("sutils.applications.assistbatch.core.sys.stdout", MagicMock(), create=True) as mystdout:
+            core.get_option_from_user(txt, idle, queued)
+
+        #print(mystdout.mock_calls)
+        calls = [
+            call.write(txt[0]),
+            call.write(''),
+            call.write(txt[1]),
+            call.write(''),
+        ]
+        mystdout.assert_has_calls(calls)
+    
+    @patch("sutils.applications.assistbatch.core.input")
+    def test_get_first_idle(self, mock_input):
+        idle = [resources.Resource('partition1', 1, 2, 3)]
+        queued = [resources.Resource('partition2', 4, 5, 6)]
+        txt = []
+        mock_input.return_value = '1'
+        with patch("sutils.applications.assistbatch.core.sys.stdout", MagicMock(), create=True) as mystdout:
+            res = core.get_option_from_user(txt, idle, queued)
+
+        self.assertEqual(res, idle[0])
+
+    @patch("sutils.applications.assistbatch.core.input")
+    def test_get_first_queue(self, mock_input):
+        idle = [resources.Resource('partition1', 1, 2, 3)]
+        queued = [resources.Resource('partition2', 4, 5, 6)]
+        txt = []
+        mock_input.return_value = '2'
+        with patch("sutils.applications.assistbatch.core.sys.stdout", MagicMock(), create=True) as mystdout:
+            res = core.get_option_from_user(txt, idle, queued)
+
+        self.assertEqual(res, queued[0])
+        
+    @patch("sutils.applications.assistbatch.core.input")
+    def test_get_second_idle(self, mock_input):
+        idle = [resources.Resource('partition1', 1, 2, 3), resources.Resource('partition2', 4, 5, 6)]
+        queued = []
+        txt = []
+        mock_input.return_value = '2'
+        with patch("sutils.applications.assistbatch.core.sys.stdout", MagicMock(), create=True) as mystdout:
+            res = core.get_option_from_user(txt, idle, queued)
+
+        self.assertEqual(res, idle[1])
+
+    @patch("sutils.applications.assistbatch.core.input")
+    def test_get_second_queue(self, mock_input):
+        idle = []
+        queued = [resources.Resource('partition1', 1, 2, 3), resources.Resource('partition2', 4, 5, 6)]
+        txt = []
+        mock_input.return_value = '2'
+        with patch("sutils.applications.assistbatch.core.sys.stdout", MagicMock(), create=True) as mystdout:
+            res = core.get_option_from_user(txt, idle, queued)
+
+        self.assertEqual(res, queued[1])

@@ -60,7 +60,7 @@ def get_option_from_user(txt, idle_resources, queued_resources):
         except ValueError:
             print(error_msg)
 
-    if ind < len(idle_resources):
+    if ind <= len(idle_resources):
         opt_resource = idle_resources[ind - 1]
     else:
         opt_resource = queued_resources[ind - len(idle_resources) - 1]
