@@ -100,7 +100,7 @@ def read_sbatch_file(filename):
                 elif 'partition' in line:
                     partitions = line.split('=')[1].strip().split(',')
                 elif 'mem=' in line:
-                    mem = line.split('=')[1].strip().split(',')
+                    mem = int(line.split('=')[1])
 
     if partitions is None:
         raise RuntimeError("partition not specified")

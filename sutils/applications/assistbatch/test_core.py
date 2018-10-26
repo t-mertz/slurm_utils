@@ -88,7 +88,16 @@ SAMPLE_FILE_NODES = ''.join([
     "#!/bin/sh\n",
     "#SBATCH --partition=mypartition\n",
     "#SBATCH --ntasks=20\n",
-    "#SBATCH --nodes=2\n"
+    "#SBATCH --nodes=2\n",
+    "sleep 1\n"
+])
+
+SAMPLE_FILE_MEM = ''.join([
+    "#!/bin/sh\n",
+    "#SBATCH --partition=mypartition\n",
+    "#SBATCH --ntasks=20\n",
+    "#SBATCH --nodes=2\n",
+    "#SBATCH --mem=2000\n",
     "sleep 1\n"
 ])
 
@@ -142,6 +151,10 @@ class TestReadSbatchFile(unittest.TestCase):
     @patch("sutils.applications.assistbatch.core.open", my_mock_open(read_data=SAMPLE_FILE_NODES), create=True)
     def test_reads_nodes_correctly(self):
         self.assertEqual(core.read_sbatch_file('filename')[0].nodes(), 2)
+
+    @patch("sutils.applications.assistbatch.core.open", my_mock_open(read_data=SAMPLE_FILE_MEM), create=True)
+    def test_reads_mem_correctly(self):
+        self.assertEqual(core.read_sbatch_file('filename')[0].memory(), 2000)
 
     @patch("sutils.applications.assistbatch.core.open", my_mock_open(read_data=SAMPLE_FILE), create=True)
     def test_missing_nodes_is_none(self):
