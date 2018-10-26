@@ -52,9 +52,21 @@ def scancel(job_id):
     retval, stdout, stderr = run_command('scancel', args)
     return 0
 
-def squeue(args):
+def _squeue(args):
     retval, stdout, stderr = run_command('squeue', args)
-    return retval, stdout
+
+    if retval != 0:
+        raise RuntimeError("Call to `squeue` failed: \n" + stderr)
+
+    return stdout
+
+def squeue(args):
+    """Call squeue with given arguments."""
+    res = _squeue(args)
+    data = [line.split() for line in res.split('\n')]
+    if len(data[-1]) == 0:
+        del data[-1]
+    return data
 
 def squeue_user():
     """Call squeue once to check for jobs of the current user.
@@ -65,11 +77,9 @@ def squeue_user():
     #args.append('--user', getpass.getuser())
     args = config.Squeue_Options(userid=getpass.getuser(), noheader=True).to_list()
 
-    retval, stdout = squeue(args)
+    res = squeue(args)
 
-    lines = stdout.split('\n')
-    data = [line.split() for line in lines]
-    return retval, SqueueResult(data)
+    return SqueueResult(res)
 
 
 

@@ -326,6 +326,12 @@ class Test_sinfo_detail(unittest.TestCase):
         slurm.sinfo_detail()
         sinfo.assert_called_once_with(format=slurm.SINFO_DETAIL_FORMAT, node=True, noheader=True)
 
+    @patch("sutils.slurm_interface.api.run_command")
+    def test_calls_runcommand_once(self, runcmd):
+        runcmd.return_value = (0, u'', u'')
+        slurm.sinfo_detail()
+        runcmd.assert_called_once_with('sinfo', ['--Format', slurm.SINFO_DETAIL_FORMAT, '--Node', '--noheader'])
+
     @patch("sutils.slurm_interface.api.sinfo")
     def test_returns_processed_sinforesult(self, sinfo):
         stdout = "node01  partition  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n" \
@@ -383,3 +389,36 @@ class TestRunCommand(unittest.TestCase):
         popen.return_value = process_mock
         slurm.run_command('command', ['arg1'])
         popen.assert_called_once_with(['command', 'arg1'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+class TestSqueueUser(unittest.TestCase):
+    @patch("sutils.slurm_interface.api._squeue")
+    def test_calls_squeue_once(self, squeue):
+        squeue.return_value = '\n'
+        slurm.squeue_user()
+        import getpass
+        user = getpass.getuser()
+        squeue.assert_called_once_with(['--user', user, '--noheader'])
+
+
+class TestSqueue(unittest.TestCase):
+    @patch("sutils.slurm_interface.api._squeue")
+    def test_calls_squeue_once(self, squeue):
+        squeue.return_value = '\n'
+        slurm.squeue_user()
+        import getpass
+        user = getpass.getuser()
+        squeue.assert_called_once_with(['--user', user, '--noheader'])
+    
+    @patch("sutils.slurm_interface.api._squeue")
+    def test_line_split(self, squeue):
+        squeue.return_value = 'a b c d\ne f g h'
+        res = slurm.squeue([])
+        lst = [['a', 'b', 'c', 'd'], ['e', 'f', 'g', 'h']]
+        self.assertEqual(res, lst)
+
+    @patch("sutils.slurm_interface.api._squeue")
+    def test_removes_empty_lines(self, squeue):
+        squeue.return_value = 'a b c d\ne f g h\n'
+        res = slurm.squeue([])
+        lst = [['a', 'b', 'c', 'd'], ['e', 'f', 'g', 'h']]
+        self.assertEqual(res, lst)
