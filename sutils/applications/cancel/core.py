@@ -7,7 +7,7 @@ def get_jobs():
     """Returns a sorted list of queued or running jobs belonging to the current
     user.
     """
-    retval, res = slurm.squeue_user()
+    res = slurm.squeue_user()
     #if test.testmode():
     #    return list(srange(3))
     joblist = res.get_ids()

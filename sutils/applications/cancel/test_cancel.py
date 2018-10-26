@@ -20,6 +20,11 @@ def fix_mock_popen(func):
 @patch("sutils.applications.cancel.core.get_jobs", return_value=(0, 1, 2))
 @patch("subprocess.Popen")
 class TestScancel(unittest.TestCase):
+    @fix_mock_popen
+    def test_calls_get_jobs(self, popen, get_jobs):
+        cancel.run({'all': True, 'last': None, 'first': None, 'force': False})
+        from . import core
+        core.get_jobs.assert_called_once_with()
 
     @fix_mock_popen
     def test_all(self, popen, get_jobs):
