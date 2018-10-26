@@ -393,7 +393,7 @@ class TestRunCommand(unittest.TestCase):
 class TestSqueueUser(unittest.TestCase):
     @patch("sutils.slurm_interface.api._squeue")
     def test_calls_squeue_once(self, squeue):
-        squeue.return_value = '\n'
+        squeue.return_value = ''
         slurm.squeue_user()
         import getpass
         user = getpass.getuser()
@@ -401,24 +401,37 @@ class TestSqueueUser(unittest.TestCase):
 
 
 class TestSqueue(unittest.TestCase):
-    @patch("sutils.slurm_interface.api._squeue")
-    def test_calls_squeue_once(self, squeue):
-        squeue.return_value = '\n'
-        slurm.squeue_user()
-        import getpass
-        user = getpass.getuser()
-        squeue.assert_called_once_with(['--user', user, '--noheader'])
-    
-    @patch("sutils.slurm_interface.api._squeue")
-    def test_line_split(self, squeue):
-        squeue.return_value = 'a b c d\ne f g h'
-        res = slurm.squeue([])
-        lst = [['a', 'b', 'c', 'd'], ['e', 'f', 'g', 'h']]
-        self.assertEqual(res, lst)
+    def setUp(self):
+        self._stdout = "123456  partition1  jobname1   username1  PENDING  0:00  2  (Priority)\n"\
+                     + "123457  partition2  jobname2   username2  RUNNING  1-01:41:13  4  partition1node[01-04]\n"
 
     @patch("sutils.slurm_interface.api._squeue")
-    def test_removes_empty_lines(self, squeue):
-        squeue.return_value = 'a b c d\ne f g h\n'
+    def test_calls_squeue_once(self, squeue):
+        squeue.return_value = ''
+        slurm.squeue([])
+        squeue.assert_called_once_with([])
+
+    @patch("sutils.slurm_interface.api._squeue")
+    def test_returns_result_of_squeue(self, squeue):
+        val = slurm.SqueueResult(self._stdout.split('\n')[0])
+        squeue.return_value = self._stdout.split('\n')[0]
         res = slurm.squeue([])
-        lst = [['a', 'b', 'c', 'd'], ['e', 'f', 'g', 'h']]
-        self.assertEqual(res, lst)
+        self.assertEqual(res, val)
+    
+
+class TestSqueueResult(unittest.TestCase):
+    def setUp(self):
+        self._stdout = "123456  partition1  jobname1   username1  PENDING  0:00  2  (Priority)\n"\
+                     + "123457  partition2  jobname2   username2  RUNNING  1-01:41:13  4  partition1node[01-04]\n"
+    
+
+    def test_copy_is_equal(self):
+        res1 = slurm.SqueueResult(self._stdout)
+        res2 = slurm.SqueueResult(self._stdout)
+
+        self.assertEqual(res1, res2)
+
+    def test_empty_init(self):
+        res = slurm.SqueueResult('')
+        self.assertEqual(res._njobs, 0)
+

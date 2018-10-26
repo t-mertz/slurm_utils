@@ -22,6 +22,16 @@ SINFO_DETAIL_FORMAT = "nodehost:.30,"\
                     + "allocmem:.14,"\
                     + "features:.50"
 
+SQUEUE_FORMAT = "jobid:.8,"\
+              + "partition:.20,"\
+              + "name:.30,"\
+              + "username:.20,"\
+              + "state:.15,"\
+              + "timeused:.12,"\
+              + "numnodes:.5,"\
+              + "nodelist:.30"
+
+
 def run_command(cmd, args):
     if False:#test.testmode():
         test.cmd_buffer.write(cmd + " " + " ".join(args))
@@ -63,10 +73,8 @@ def _squeue(args):
 def squeue(args):
     """Call squeue with given arguments."""
     res = _squeue(args)
-    data = [line.split() for line in res.split('\n')]
-    if len(data[-1]) == 0:
-        del data[-1]
-    return data
+
+    return SqueueResult(res)
 
 def squeue_user():
     """Call squeue once to check for jobs of the current user.
@@ -77,9 +85,7 @@ def squeue_user():
     #args.append('--user', getpass.getuser())
     args = config.Squeue_Options(userid=getpass.getuser(), noheader=True).to_list()
 
-    res = squeue(args)
-
-    return SqueueResult(res)
+    return squeue(args)
 
 
 
@@ -119,9 +125,15 @@ class Result(object):
 class SqueueResult(Result):
     def __init__(self, data):
         # convert to numpy array and use slices?
-        if len(data[0]) > 0:
-            self.jobid = [int(d[0]) for d in data]
-            self.status = [d[1] for d in data]
+
+        tmp_data = [line.split() for line in data.split('\n')]
+        if len(tmp_data[-1]) == 0:
+            del tmp_data[-1]
+        self._data = np.array(tmp_data)
+        self._njobs = len(tmp_data)
+        if self._njobs > 0:
+            self.jobid = [int(d) for d in self._data[:, 0]]
+            self.status = [d for d in self._data[:, 4]]
         else:
             self.jobid = None
             self.status = None
@@ -140,6 +152,9 @@ class SqueueResult(Result):
     def __iter__(self):
         for i in self.jobid:
             yield i
+
+    def __eq__(self, obj):
+        return np.all(self._data == obj._data)
 
 class SinfoResult(Result):
     def __init__(self, data):
