@@ -161,13 +161,6 @@ class TestReadSbatchFile(unittest.TestCase):
         self.assertEqual(core.read_sbatch_file('filename')[0].nodes(), None)
 
 
-# @patch("sutils.applications.assistbatch.core.slurm.sinfo_detail", Mock())
-# class TestSubmit(unittest.TestCase):
-#     @patch("sutils.applications.assistbatch.core.read_sbatch_file")
-#     def test_calls_read_sbatch_file(self, read):
-#         core.submit('myfilename')
-#         read.assert_called_once_with('myfilename')
-
 class TestWriteSbatchFile(unittest.TestCase):
     @patch("sutils.applications.assistbatch.core.open", my_mock_open(read_data=SAMPLE_FILE), create=True)
     def test_calls_open_read_once(self):
@@ -179,7 +172,7 @@ class TestWriteSbatchFile(unittest.TestCase):
     def test_calls_open_write_once(self):
         #myopen =  my_mock_open(read_data=SAMPLE_FILE)
         core.write_sbatch_file('infilename', resources.Resource('partition', 1, 1, 1000))
-        self.assertEqual(core.open.mock_calls.count(call('outfilename', 'w')), 1)
+        self.assertEqual(core.open.mock_calls.count(call('asbatch_infilename', 'w')), 1)
     
     @patch("sutils.applications.assistbatch.core.open", my_mock_open(read_data=SAMPLE_FILE), create=True)
     def test_calls_write_once_per_line(self):
@@ -188,7 +181,7 @@ class TestWriteSbatchFile(unittest.TestCase):
         calls = [
             call('infilename', 'r'),
             call().__enter__(),
-            call('outfilename', 'w'),
+            call('asbatch_infilename', 'w'),
             call().__enter__(),
             call().readline(),
             call().write("#!/bin/sh\n"),
@@ -213,7 +206,7 @@ class TestWriteSbatchFile(unittest.TestCase):
         calls = [
             call('infilename', 'r'),
             call().__enter__(),
-            call('outfilename', 'w'),
+            call('asbatch_infilename', 'w'),
             call().__enter__(),
             call().readline(),
             call().write("#!/bin/sh\n"),
@@ -238,7 +231,7 @@ class TestWriteSbatchFile(unittest.TestCase):
         calls = [
             call('infilename', 'r'),
             call().__enter__(),
-            call('outfilename', 'w'),
+            call('asbatch_infilename', 'w'),
             call().__enter__(),
             call().readline(),
             call().write("#!/bin/sh\n"),
@@ -320,3 +313,96 @@ class TestGetOptionFromUser(unittest.TestCase):
             res = core.get_option_from_user(txt, idle, queued)
 
         self.assertEqual(res, queued[1])
+
+class TestSubmit(unittest.TestCase):
+    @patch("sutils.applications.assistbatch.core.slurm.sinfo_detail", Mock())
+    @patch("sutils.applications.assistbatch.core.read_sbatch_file")
+    def test_calls_read_sbatch_file(self, read):
+        sinfo_stdout = "node01  partition  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n" \
+                +"node02  partition1  1.00  7/8/1/16  2:8:2  alloc  16384  16000  10  infiniband\n"
+        core.slurm.sinfo_detail.return_value = core.slurm.SinfoData(sinfo_stdout)
+        read.return_value = [resources.Resource('partition', 4, None, None)]
+        with patch("sutils.applications.assistbatch.core.input", Mock()) as mock_input:
+            mock_input.return_value = '1'
+            with patch("sutils.applications.assistbatch.core.open", my_mock_open(), create=True):
+                core.submit('myfilename')
+        read.assert_called_once_with('myfilename')
+
+    @patch("sutils.applications.assistbatch.core.slurm.sinfo_detail", Mock())
+    @patch("sutils.applications.assistbatch.core.read_sbatch_file")
+    def test_calls_sinfo_detail(self, read):
+        sinfo_stdout = "node01  partition  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n" \
+                +"node02  partition1  1.00  7/8/1/16  2:8:2  alloc  16384  16000  10  infiniband\n"
+        core.slurm.sinfo_detail.return_value = core.slurm.SinfoData(sinfo_stdout)
+        read.return_value = [resources.Resource('partition', 4, None, None)]
+        with patch("sutils.applications.assistbatch.core.input", Mock()) as mock_input:
+            mock_input.return_value = '1'
+            with patch("sutils.applications.assistbatch.core.open", my_mock_open(), create=True):
+                core.submit('myfilename')
+        core.slurm.sinfo_detail.assert_called_once_with()
+
+    @patch("sutils.applications.assistbatch.core.slurm.sinfo_detail", Mock())
+    @patch("sutils.applications.assistbatch.core.read_sbatch_file")
+    @patch("sutils.applications.assistbatch.core.find_optimal_resources", MagicMock())
+    def test_calls_find_optimal_resources(self, read):
+        sinfo_stdout = "node01  partition  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n" \
+                +"node02  partition1  1.00  7/8/1/16  2:8:2  alloc  16384  16000  10  infiniband\n"
+        sinfo_data = core.slurm.SinfoData(sinfo_stdout)
+        core.slurm.sinfo_detail.return_value = sinfo_data
+        req_resource = [resources.Resource('partition', 4, None, None)]
+        read.return_value = req_resource
+        core.find_optimal_resources.return_value = [resources.Resource('partition', 4, 1, None)]
+        with patch("sutils.applications.assistbatch.core.input", Mock()) as mock_input:
+            mock_input.return_value = '1'
+            with patch("sutils.applications.assistbatch.core.open", my_mock_open(), create=True):
+                core.submit('myfilename')
+        calls = [
+            call(sinfo_data, req_resource[0], idle=True),
+            call(sinfo_data, req_resource[0], idle=False),
+        ]
+        core.find_optimal_resources.assert_has_calls(calls)
+
+    
+    @patch("sutils.applications.assistbatch.core.slurm.sinfo_detail", Mock())
+    @patch("sutils.applications.assistbatch.core.read_sbatch_file")
+    @patch("sutils.applications.assistbatch.core.get_resource_summary", Mock())
+    def test_calls_get_resource_summary(self, read):
+        sinfo_stdout = "node01  partition  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n" \
+                +"node02  partition1  1.00  7/8/1/16  2:8:2  alloc  16384  16000  10  infiniband\n"
+        core.slurm.sinfo_detail.return_value = core.slurm.SinfoData(sinfo_stdout)
+        read.return_value = [resources.Resource('partition', 4, None, None)]
+        core.get_resource_summary.return_value = ['']
+        with patch("sutils.applications.assistbatch.core.input", Mock()) as mock_input:
+            mock_input.return_value = '1'
+            with patch("sutils.applications.assistbatch.core.open", my_mock_open(), create=True):
+                core.submit('myfilename')
+        core.get_resource_summary.assert_called_once_with([resources.Resource('partition', 4, 1, None)], [])
+
+    @patch("sutils.applications.assistbatch.core.slurm.sinfo_detail", Mock())
+    @patch("sutils.applications.assistbatch.core.read_sbatch_file")
+    @patch("sutils.applications.assistbatch.core.write_sbatch_file", MagicMock())
+    def test_calls_write_sbatch_file(self, read):
+        sinfo_stdout = "node01  partition  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n" \
+                +"node02  partition1  1.00  7/8/1/16  2:8:2  alloc  16384  16000  10  infiniband\n"
+        core.slurm.sinfo_detail.return_value = core.slurm.SinfoData(sinfo_stdout)
+        read.return_value = [resources.Resource('partition', 4, None, None)]
+        with patch("sutils.applications.assistbatch.core.input", Mock()) as mock_input:
+            mock_input.return_value = '1'
+            with patch("sutils.applications.assistbatch.core.open", my_mock_open(), create=True):
+                core.submit('myfilename')
+        core.write_sbatch_file.assert_called_once_with('myfilename', resources.Resource('partition', 4, 1, None))
+
+
+    @patch("sutils.applications.assistbatch.core.slurm.sinfo_detail", Mock())
+    @patch("sutils.applications.assistbatch.core.read_sbatch_file")
+    @patch("sutils.applications.assistbatch.core.slurm.sbatch", MagicMock())
+    def test_calls_sbatch(self, read):
+        sinfo_stdout = "node01  partition  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n" \
+                +"node02  partition1  1.00  7/8/1/16  2:8:2  alloc  16384  16000  10  infiniband\n"
+        core.slurm.sinfo_detail.return_value = core.slurm.SinfoData(sinfo_stdout)
+        read.return_value = [resources.Resource('partition', 4, None, None)]
+        with patch("sutils.applications.assistbatch.core.input", Mock()) as mock_input:
+            mock_input.return_value = '1'
+            with patch("sutils.applications.assistbatch.core.open", my_mock_open(), create=True):
+                core.submit('myfilename')
+        core.slurm.sbatch.assert_called_once_with('.', 'asbatch_myfilename')

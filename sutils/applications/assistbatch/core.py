@@ -20,7 +20,7 @@ def submit(filename, firstmatch=False):
     queued_resources = []
 
     if requested_resources[0].nodes() is not None:
-        # queue user if this was intentional
+        # query user if this was intentional
         pass
 
     for cur_resource in requested_resources:
@@ -43,7 +43,10 @@ def submit(filename, firstmatch=False):
         opt_resource = get_option_from_user(summary_txt, idle_resources, queued_resources)
     
     # write new numbers to script file
+    write_sbatch_file(filename, opt_resource)
+
     # submit the job
+    slurm.sbatch('.', 'asbatch_'+filename)
 
 def get_option_from_user(txt, idle_resources, queued_resources):
     for line in txt:
@@ -111,8 +114,9 @@ def read_sbatch_file(filename):
 
 def write_sbatch_file(filename, resource):
     setmap = {'partition': False, 'ntasks': False, 'nodes': False}
+    outfilename = 'asbatch_'+filename
     with open(filename, 'r') as infile:
-        with open('outfilename', 'w') as outfile:
+        with open(outfilename, 'w') as outfile:
             for line in infile:
                 newline = line
                 if 'partition' in line:
