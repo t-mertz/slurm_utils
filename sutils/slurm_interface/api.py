@@ -35,7 +35,7 @@ def run_command(cmd, args):
 
     retval = 0 if len(stderr) == 0 else 1
 
-    return retval, stdout, stderr
+    return retval, stdout.decode('utf-8'), stderr.decode('utf-8')
 
 def sbatch(work_dir, *args, **kwargs):
     named_args = config.SbatchConfig(work_dir=work_dir).to_list()

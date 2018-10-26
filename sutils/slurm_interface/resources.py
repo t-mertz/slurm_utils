@@ -36,10 +36,9 @@ def find_resources(hwdata, n, idle=False):
     Returns number of CPUs and the number of nodes.
     """
     if idle:
-        key = 'idlecpus'
+        cpus = list(hwdata.filter_idle()['idlecpus'])
     else:
-        key = 'allcpus'
-    cpus = list(hwdata[key])
+        cpus = list(hwdata['allcpus'])
     for i in range(cpus.count(0)):
         cpus.remove(0) # remove nodes with 0 CPUs
     optimum = _subset_internal(cpus, n)

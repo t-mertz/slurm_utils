@@ -9,7 +9,7 @@ from ...test import test
 def fix_mock_popen(func):
     def wrapper(self, popen, get_jobs):
         process_mock = Mock()
-        attrs = {'communicate.return_value': ('', '')}
+        attrs = {'communicate.return_value': (b'', b'')}
         process_mock.configure_mock(**attrs)
         popen.return_value = process_mock
         func(self, popen, get_jobs)

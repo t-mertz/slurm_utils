@@ -365,10 +365,20 @@ class TestRunCommand(unittest.TestCase):
         cmd = 'myrandomcommandsurelydoesntexist'
         self.assertRaises(FileNotFoundError, slurm.run_command, cmd, [])
 
+    def test_returns_stdout_as_string(self):
+        cmd = 'ls'
+        res = slurm.run_command(cmd, [])
+        self.assertEqual(type(res[1]), str)
+
+    def test_returns_stderr_as_string(self):
+        cmd = 'ls'
+        res = slurm.run_command(cmd, [])
+        self.assertEqual(type(res[2]), str)
+
     @patch("subprocess.Popen")
     def test_popen_called(self, popen):
         process_mock = Mock()
-        attrs = {'communicate.return_value': ('output', 'error')}
+        attrs = {'communicate.return_value': (b'output', b'error')}
         process_mock.configure_mock(**attrs)
         popen.return_value = process_mock
         slurm.run_command('command', ['arg1'])

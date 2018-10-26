@@ -95,11 +95,11 @@ class TestIsCPUCommensurate(unittest.TestCase):
         self.assertTrue(resources.is_cpu_commensurate(data, 8, status='idle'))
 
 class TestFindResources(unittest.TestCase):
-    def test_zero_request_returns_none(self):
+    def test_zero_request_returns_zero(self):
         sinfo_data = slurm.SinfoData(SINFO_STDOUT_TWO_LINE)
         self.assertEqual(resources.find_resources(sinfo_data, 0), (0, 0))
 
-    def test_single_cpu_returns_none(self):
+    def test_single_cpu_returns_four(self):
         sinfo_data = slurm.SinfoData(SINFO_STDOUT_TWO_LINE)
         self.assertEqual(resources.find_resources(sinfo_data, 1), (4, 1))
 
