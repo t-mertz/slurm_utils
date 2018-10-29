@@ -423,3 +423,7 @@ def srange(start, stop=None, step=1):
 
     for i in range(start, stop, step):
         yield str(i)
+
+def stringify_list(list):
+    """Convert every item to string."""
+    return [str(i) for i in list]

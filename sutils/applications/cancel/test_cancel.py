@@ -30,11 +30,11 @@ class TestScancel(unittest.TestCase):
     def test_all(self, popen, get_jobs):
         cancel.run({'all': True, 'last': None, 'first': None, 'force': False})
         calls = [
-            call(["scancel", 0], stderr=-1, stdout=-1),
+            call(["scancel", '0'], stderr=-1, stdout=-1),
             call().communicate(),
-            call(["scancel", 1], stderr=-1, stdout=-1),
+            call(["scancel", '1'], stderr=-1, stdout=-1),
             call().communicate(),
-            call(["scancel", 2], stderr=-1, stdout=-1),
+            call(["scancel", '2'], stderr=-1, stdout=-1),
             call().communicate()
         ]
         popen.assert_has_calls(calls)
@@ -44,7 +44,7 @@ class TestScancel(unittest.TestCase):
     def test_all_force(self, popen, get_jobs):
         cancel.run({'all': True, 'last': None, 'first': None, 'force': True})
         calls = [
-            call(['scancel', 0, 1, 2], stderr=-1, stdout=-1),
+            call(['scancel', '0', '1', '2'], stderr=-1, stdout=-1),
             call().communicate(),
         ]
         popen.assert_has_calls(calls)
@@ -54,7 +54,7 @@ class TestScancel(unittest.TestCase):
     def test_first1(self, popen, get_jobs):
         cancel.run({'all': None, 'last': None, 'first': 1, 'force': False})
         calls = [
-            call(['scancel', 0], stderr=-1, stdout=-1),
+            call(['scancel', '0'], stderr=-1, stdout=-1),
             call().communicate(),
         ]
         popen.assert_has_calls(calls)
@@ -64,9 +64,9 @@ class TestScancel(unittest.TestCase):
     def test_first2(self, popen, get_jobs):
         cancel.run({'all': None, 'last': None, 'first': 2, 'force': False})
         calls = [
-            call(['scancel', 0], stderr=-1, stdout=-1),
+            call(['scancel', '0'], stderr=-1, stdout=-1),
             call().communicate(),
-            call(['scancel', 1], stderr=-1, stdout=-1),
+            call(['scancel', '1'], stderr=-1, stdout=-1),
             call().communicate(),
         ]
         popen.assert_has_calls(calls)
@@ -76,7 +76,7 @@ class TestScancel(unittest.TestCase):
     def test_last1(self, popen, get_jobs):
         cancel.run({'all': None, 'last': 1, 'first': None, 'force': False})
         calls = [
-            call(["scancel", 2], stderr=-1, stdout=-1),
+            call(["scancel", '2'], stderr=-1, stdout=-1),
             call().communicate(),
         ]
         popen.assert_has_calls(calls)
@@ -86,9 +86,9 @@ class TestScancel(unittest.TestCase):
     def test_last2(self, popen, get_jobs):
         cancel.run({'all': None, 'last': 2, 'first': None, 'force': False})
         calls = [
-            call(["scancel", 2], stderr=-1, stdout=-1),
+            call(["scancel", '2'], stderr=-1, stdout=-1),
             call().communicate(),
-            call(["scancel", 1], stderr=-1, stdout=-1),
+            call(["scancel", '1'], stderr=-1, stdout=-1),
             call().communicate(),
         ]
         popen.assert_has_calls(calls)
@@ -100,7 +100,7 @@ class TestScancel(unittest.TestCase):
         #res = test.cmd_buffer.flush()
         #commands = res.strip().split("\n")
         calls = [
-            call(["scancel", 2, 1], stderr=-1, stdout=-1),
+            call(["scancel", '2', '1'], stderr=-1, stdout=-1),
             call().communicate()
         ]
         popen.assert_has_calls(calls)
@@ -113,7 +113,7 @@ class TestScancel(unittest.TestCase):
     def test_first2_force(self, popen, get_jobs):
         cancel.run({'all': None, 'last': None, 'first': 2, 'force': True})
         calls = [
-            call(['scancel', 0, 1], stderr=-1, stdout=-1),
+            call(['scancel', '0', '1'], stderr=-1, stdout=-1),
             call().communicate(),
         ]
         popen.assert_has_calls(calls)
@@ -123,7 +123,7 @@ class TestScancel(unittest.TestCase):
     def test_last1_force(self, popen, get_jobs):
         cancel.run({'all': None, 'last': 1, 'first': None, 'force': True})
         calls = [
-            call(["scancel", 2], stderr=-1, stdout=-1),
+            call(["scancel", '2'], stderr=-1, stdout=-1),
             call().communicate(),
         ]
         popen.assert_has_calls(calls)
@@ -138,7 +138,7 @@ class TestScancel(unittest.TestCase):
     def test_first1_force(self, popen, get_jobs):
         cancel.run({'all': None, 'last': None, 'first': 1, 'force': True})
         calls = [
-            call(['scancel', 0], stderr=-1, stdout=-1),
+            call(['scancel', '0'], stderr=-1, stdout=-1),
             call().communicate(),
         ]
         popen.assert_has_calls(calls)
@@ -148,11 +148,11 @@ class TestScancel(unittest.TestCase):
     def test_first5_cancels_all_if_less_are_running(self, popen, get_jobs):
         cancel.run({'all': None, 'last': None, 'first': 5, 'force': False})
         calls = [
-            call(['scancel', 0], stderr=-1, stdout=-1),
+            call(['scancel', '0'], stderr=-1, stdout=-1),
             call().communicate(),
-            call(['scancel', 1], stderr=-1, stdout=-1),
+            call(['scancel', '1'], stderr=-1, stdout=-1),
             call().communicate(),
-            call(['scancel', 2], stderr=-1, stdout=-1),
+            call(['scancel', '2'], stderr=-1, stdout=-1),
             call().communicate()
         ]
         popen.assert_has_calls(calls)
@@ -164,11 +164,11 @@ class TestScancel(unittest.TestCase):
         #res = test.cmd_buffer.flush()
         #commands = res.strip().split("\n")
         calls = [
-            call(["scancel", 2], stderr=-1, stdout=-1),
+            call(["scancel", '2'], stderr=-1, stdout=-1),
             call().communicate(),
-            call(["scancel", 1], stderr=-1, stdout=-1),
+            call(["scancel", '1'], stderr=-1, stdout=-1),
             call().communicate(),
-            call(["scancel", 0], stderr=-1, stdout=-1),
+            call(["scancel", '0'], stderr=-1, stdout=-1),
             call().communicate(),
         ]
         popen.assert_has_calls(calls)

@@ -9,7 +9,7 @@ import numpy as np
 
 from . import config
 from ..test import test
-from ..utils.util import to_list
+from ..utils.util import to_list, stringify_list
 
 SINFO_DETAIL_FORMAT = "nodehost:.30,"\
                     + "partitionname:.20,"\
@@ -33,12 +33,13 @@ SQUEUE_FORMAT = "jobid:.8,"\
 
 
 def run_command(cmd, args):
+    sargs = stringify_list(args)
     if False:#test.testmode():
         test.cmd_buffer.write(cmd + " " + " ".join(args))
         stdout = ""
         stderr = ""
     else:
-        p = subprocess.Popen([cmd] + args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.Popen([cmd] + sargs, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         #p.wait()
         stdout, stderr = p.communicate()
         #p.terminate()
