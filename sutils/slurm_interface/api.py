@@ -136,12 +136,12 @@ class SqueueResult(Result):
             self.jobid = [int(d) for d in self._data[:, 0]]
             self.status = [d for d in self._data[:, 4]]
         else:
-            self.jobid = None
-            self.status = None
+            self.jobid = []
+            self.status = []
 
     def get(self, jobid):
         try:
-            index = self.jobid.find(jobid)
+            index = self.jobid.index(jobid)
         except ValueError:
             # not in list
             pass

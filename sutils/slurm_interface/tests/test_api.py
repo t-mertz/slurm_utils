@@ -417,7 +417,7 @@ class TestSqueue(unittest.TestCase):
         squeue.return_value = self._stdout.split('\n')[0]
         res = slurm.squeue([])
         self.assertEqual(res, val)
-    
+
 
 class TestSqueueResult(unittest.TestCase):
     def setUp(self):
@@ -435,3 +435,12 @@ class TestSqueueResult(unittest.TestCase):
         res = slurm.SqueueResult('')
         self.assertEqual(res._njobs, 0)
 
+    def test_get_ids_returns_iterable(self):
+        res1 = slurm.SqueueResult(self._stdout)
+
+        self.assertTrue(hasattr(res1.get_ids(), '__iter__'))
+
+    def test_get_ids_returns_iterable_for_empty_queue(self):
+        res1 = slurm.SqueueResult("")
+
+        self.assertTrue(hasattr(res1.get_ids(), '__iter__'))
