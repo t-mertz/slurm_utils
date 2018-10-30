@@ -59,7 +59,10 @@ def get_option_from_user(txt, idle_resources, queued_resources):
     while not success:
         try:
             ind = int(input(selection_query))
-            success = True
+            if len(txt) > ind > 0:
+                success = True
+            else:
+                raise ValueError
         except ValueError:
             print(error_msg)
 
