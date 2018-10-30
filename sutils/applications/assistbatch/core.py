@@ -172,3 +172,11 @@ def get_resource_summary(idle, queued):
         ))
         ind += 1
     return output_txt
+
+def add_max_resources(idle_res, hwinfo):
+    idle_partitions = [r.partition() for r in idle_res]
+    max_resources = resources.get_maximal_resources(hwinfo)
+    for p in np.unique(hwinfo['partition']):
+        if p not in idle_partitions:
+            idle_res.append(max_resources[p])
+

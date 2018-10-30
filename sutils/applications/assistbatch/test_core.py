@@ -1,5 +1,6 @@
 import unittest
 from unittest.mock import patch, mock_open, MagicMock, Mock, call
+import copy
 
 from ...slurm_interface import resources as resources
 from ...slurm_interface import api as slurm
@@ -411,3 +412,49 @@ class TestSubmit(unittest.TestCase):
             with patch("sutils.applications.assistbatch.core.open", my_mock_open(), create=True):
                 core.submit('myfilename')
         core.slurm.sbatch.assert_called_once_with('.', 'asbatch_myfilename')
+
+class TestAddMaxResources(unittest.TestCase):
+    def test_adds_nothing_if_partition_is_idle(self):
+        sinfo_stdout = "node01  partition  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n"
+        hwinfo = slurm.SinfoData(sinfo_stdout)
+        res_idle = [resources.Resource('partition', 4, 1, None)]
+        res_idle_cpy = copy.copy(res_idle)
+        core.add_max_resources(res_idle, hwinfo)
+        self.assertEqual(res_idle, res_idle_cpy)
+        
+    def test_adds_single_if_partition_is_not_idle(self):
+        sinfo_stdout = "node01  partition  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n"
+        hwinfo = slurm.SinfoData(sinfo_stdout)
+        res_idle = []
+        core.add_max_resources(res_idle, hwinfo)
+        self.assertEqual(res_idle, [resources.Resource('partition', 4, 1, None)])
+
+    def test_adds_single_for_multiple_if_partition_is_not_idle(self):
+        sinfo_stdout = "node01  partition1  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n" \
+                + "node01  partition2  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n"
+
+        hwinfo = slurm.SinfoData(sinfo_stdout)
+        res_idle = []
+        core.add_max_resources(res_idle, hwinfo)
+        self.assertEqual(res_idle, [resources.Resource('partition1', 4, 1, None), resources.Resource('partition2', 4, 1, None)])
+
+    def test_adds_single_for_one_of_multiple_if_partition_is_not_idle(self):
+        sinfo_stdout = "node01  partition1  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n" \
+                + "node01  partition2  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n"
+
+        hwinfo = slurm.SinfoData(sinfo_stdout)
+        res_idle = [resources.Resource('partition1', 4, 1, None)]
+        core.add_max_resources(res_idle, hwinfo)
+        self.assertEqual(res_idle, [resources.Resource('partition1', 4, 1, None), resources.Resource('partition2', 4, 1, None)])
+
+    @patch("sutils.slurm_interface.resources.get_maximal_resources", create=True)
+    #@patch("sutils.applications.assistbatch.core.resources.get_maximal_resources")
+    def test_calls_get_maximal_resources(self, mock_get_max):
+        sinfo_stdout = "node01  partition1  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n" \
+                + "node01  partition2  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n"
+
+        hwinfo = slurm.SinfoData(sinfo_stdout)
+        res_idle = [resources.Resource('partition1', 4, 1, None)]
+        core.add_max_resources(res_idle, hwinfo)
+        mock_get_max.assert_called_once_with(hwinfo)
+

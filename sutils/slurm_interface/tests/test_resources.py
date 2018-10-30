@@ -222,17 +222,17 @@ class TestSubsetInternal(unittest.TestCase):
 class TestGetMaximalResources(unittest.TestCase):
     def test_returns_single_resource(self):
         sinfo_data = slurm.SinfoData(SINFO_STDOUT_TWO_LINE)
-        self.assertEqual(resources.get_maximal_resources(sinfo_data), [resources.Resource('partition', 8, 2, None)])
+        self.assertEqual(resources.get_maximal_resources(sinfo_data), {'partition': resources.Resource('partition', 8, 2, None)})
 
     def test_returns_multiple_resources(self):
         sout = "node01  partition1  0.00  4/0/0/4  1:4:1  idle  8192  8000  0  (null)\n"\
                +"node02  partition2  0.00  4/0/0/4  1:4:1  idle  8192  8000  0  (null)\n"
         sinfo_data = slurm.SinfoData(sout)
-        res = [resources.Resource('partition1', 4, 1, None), resources.Resource('partition2', 4, 1, None)]
+        res = {'partition1': resources.Resource('partition1', 4, 1, None), 'partition2': resources.Resource('partition2', 4, 1, None)}
         self.assertEqual(resources.get_maximal_resources(sinfo_data), res)
 
     def test_returns_no_resource(self):
         sinfo_data = slurm.SinfoData('')
-        self.assertEqual(resources.get_maximal_resources(sinfo_data), [])
+        self.assertEqual(resources.get_maximal_resources(sinfo_data), {})
 
 

@@ -157,7 +157,6 @@ class Resource(object):
 
 def get_maximal_resources(hwinfo):
     partitions = np.unique(hwinfo['partition'])
-    npartitions = len(partitions)
     ncpus = []
     nnodes = []
     for p in partitions:
@@ -165,5 +164,5 @@ def get_maximal_resources(hwinfo):
         ncpus.append(tmp['allcpus'].sum())
         nnodes.append(len(tmp['allcpus']))
 
-    return [Resource(partitions[i], ncpus[i], nnodes[i], None) for i in range(npartitions)]
+    return {p: Resource(partitions[i], ncpus[i], nnodes[i], None) for i,p in enumerate(partitions)}
     
