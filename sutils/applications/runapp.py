@@ -19,4 +19,7 @@ def run_application(app_name=None):
 
     options = vars(app_pckg.options.parser.parse_args(sys.argv[1:]))
 
-    app_module.run(options)
+    try:
+        app_module.run(options)
+    except KeyboardInterrupt:
+        print("Keyboard interrupt.")
