@@ -46,7 +46,8 @@ def submit(filename, firstmatch=False):
     write_sbatch_file(filename, opt_resource)
 
     # submit the job
-    slurm.sbatch('.', 'asbatch_'+filename)
+    res = slurm.sbatch('.', 'asbatch_'+filename)
+    print(res.stdout())
 
 def get_option_from_user(txt, idle_resources, queued_resources):
     for line in txt:
@@ -59,10 +60,10 @@ def get_option_from_user(txt, idle_resources, queued_resources):
     while not success:
         try:
             ind = int(input(selection_query))
-            if len(txt) > ind > 0:
+            if len(txt) >= ind > 0:
                 success = True
             else:
-                raise ValueError
+                raise ValueError(ind, len(txt))
         except ValueError:
             print(error_msg)
 

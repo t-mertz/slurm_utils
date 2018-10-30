@@ -274,7 +274,7 @@ class TestGetOptionFromUser(unittest.TestCase):
     def test_get_first_idle(self, mock_input):
         idle = [resources.Resource('partition1', 1, 2, 3)]
         queued = [resources.Resource('partition2', 4, 5, 6)]
-        txt = []
+        txt = ['']
         mock_input.return_value = '1'
         with patch("sutils.applications.assistbatch.core.sys.stdout", MagicMock(), create=True) as mystdout:
             res = core.get_option_from_user(txt, idle, queued)
@@ -285,7 +285,7 @@ class TestGetOptionFromUser(unittest.TestCase):
     def test_get_first_queue(self, mock_input):
         idle = [resources.Resource('partition1', 1, 2, 3)]
         queued = [resources.Resource('partition2', 4, 5, 6)]
-        txt = []
+        txt = ['', '']
         mock_input.return_value = '2'
         with patch("sutils.applications.assistbatch.core.sys.stdout", MagicMock(), create=True) as mystdout:
             res = core.get_option_from_user(txt, idle, queued)
@@ -296,7 +296,7 @@ class TestGetOptionFromUser(unittest.TestCase):
     def test_get_second_idle(self, mock_input):
         idle = [resources.Resource('partition1', 1, 2, 3), resources.Resource('partition2', 4, 5, 6)]
         queued = []
-        txt = []
+        txt = ['', '']
         mock_input.return_value = '2'
         with patch("sutils.applications.assistbatch.core.sys.stdout", MagicMock(), create=True) as mystdout:
             res = core.get_option_from_user(txt, idle, queued)
@@ -307,7 +307,7 @@ class TestGetOptionFromUser(unittest.TestCase):
     def test_get_second_queue(self, mock_input):
         idle = []
         queued = [resources.Resource('partition1', 1, 2, 3), resources.Resource('partition2', 4, 5, 6)]
-        txt = []
+        txt = ['', '']
         mock_input.return_value = '2'
         with patch("sutils.applications.assistbatch.core.sys.stdout", MagicMock(), create=True) as mystdout:
             res = core.get_option_from_user(txt, idle, queued)
@@ -315,6 +315,7 @@ class TestGetOptionFromUser(unittest.TestCase):
         self.assertEqual(res, queued[1])
 
 class TestSubmit(unittest.TestCase):
+    @patch("sutils.applications.assistbatch.core.slurm.sbatch", Mock())
     @patch("sutils.applications.assistbatch.core.slurm.sinfo_detail", Mock())
     @patch("sutils.applications.assistbatch.core.read_sbatch_file")
     def test_calls_read_sbatch_file(self, read):
@@ -328,6 +329,7 @@ class TestSubmit(unittest.TestCase):
                 core.submit('myfilename')
         read.assert_called_once_with('myfilename')
 
+    @patch("sutils.applications.assistbatch.core.slurm.sbatch", Mock())
     @patch("sutils.applications.assistbatch.core.slurm.sinfo_detail", Mock())
     @patch("sutils.applications.assistbatch.core.read_sbatch_file")
     def test_calls_sinfo_detail(self, read):
@@ -341,6 +343,7 @@ class TestSubmit(unittest.TestCase):
                 core.submit('myfilename')
         core.slurm.sinfo_detail.assert_called_once_with()
 
+    @patch("sutils.applications.assistbatch.core.slurm.sbatch", Mock())
     @patch("sutils.applications.assistbatch.core.slurm.sinfo_detail", Mock())
     @patch("sutils.applications.assistbatch.core.read_sbatch_file")
     @patch("sutils.applications.assistbatch.core.find_optimal_resources", MagicMock())
@@ -362,7 +365,7 @@ class TestSubmit(unittest.TestCase):
         ]
         core.find_optimal_resources.assert_has_calls(calls)
 
-    
+    @patch("sutils.applications.assistbatch.core.slurm.sbatch", Mock())    
     @patch("sutils.applications.assistbatch.core.slurm.sinfo_detail", Mock())
     @patch("sutils.applications.assistbatch.core.read_sbatch_file")
     @patch("sutils.applications.assistbatch.core.get_resource_summary", Mock())
@@ -378,6 +381,7 @@ class TestSubmit(unittest.TestCase):
                 core.submit('myfilename')
         core.get_resource_summary.assert_called_once_with([resources.Resource('partition', 4, 1, None)], [])
 
+    @patch("sutils.applications.assistbatch.core.slurm.sbatch", Mock())
     @patch("sutils.applications.assistbatch.core.slurm.sinfo_detail", Mock())
     @patch("sutils.applications.assistbatch.core.read_sbatch_file")
     @patch("sutils.applications.assistbatch.core.write_sbatch_file", MagicMock())
@@ -393,6 +397,7 @@ class TestSubmit(unittest.TestCase):
         core.write_sbatch_file.assert_called_once_with('myfilename', resources.Resource('partition', 4, 1, None))
 
 
+    @patch("sutils.applications.assistbatch.core.slurm.sbatch", Mock())
     @patch("sutils.applications.assistbatch.core.slurm.sinfo_detail", Mock())
     @patch("sutils.applications.assistbatch.core.read_sbatch_file")
     @patch("sutils.applications.assistbatch.core.slurm.sbatch", MagicMock())

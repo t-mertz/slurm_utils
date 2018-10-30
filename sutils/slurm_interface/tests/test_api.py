@@ -444,3 +444,12 @@ class TestSqueueResult(unittest.TestCase):
         res1 = slurm.SqueueResult("")
 
         self.assertTrue(hasattr(res1.get_ids(), '__iter__'))
+
+
+class TestSbatchResult(unittest.TestCase):
+    
+    def test_stdout(self):
+        stdout_str = "This is the stdout"
+        
+        self.assertEqual(slurm.SbatchResult(stdout_str).stdout(), stdout_str)
+        

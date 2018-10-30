@@ -55,7 +55,11 @@ def sbatch(work_dir, *args, **kwargs):
         named_args.append("--{}={}".format(arg, kwargs[arg]))
 
     retval, stdout, stderr = run_command('sbatch', named_args)
-    return retval, stdout
+    
+    if retval != 0:
+        raise RuntimeError("Call to `sbatch` failed: \n" + stderr)
+
+    return SbatchResult(stdout)
 
 def scancel(job_id):
     #args = config.Scancel_Options(job_id=job_id).to_list()
@@ -122,6 +126,10 @@ class Result(object):
     
     def __len__(self):
         return len(self._data)
+
+class SbatchResult(Result):
+    def stdout(self):
+        return self._data[0]
 
 class SqueueResult(Result):
     def __init__(self, data):
