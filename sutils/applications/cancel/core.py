@@ -38,6 +38,8 @@ def cancel_list(job_list, force=False):
             sys.stdout.write("{}/{}: Cancelling {} ...".format(i+1, N, jobid))
             slurm.scancel(job_id=jobid)
             sys.stdout.write(" done\n")
+        if N == 0:
+            sys.stdout.write("Nothing to cancel.\n")
     else:
         slurm.scancel(job_id=job_list)
         sys.stdout.write("Cancelled {} jobs.\n".format(N))
