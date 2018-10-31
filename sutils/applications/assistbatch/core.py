@@ -168,7 +168,7 @@ def get_resource_summary(idle, queued):
                 partition=res.partition(),
                 cpus=res.cpus(),
                 nodes=res.nodes(),
-                status='pending'
+                status='allocated'
         ))
         ind += 1
     return output_txt
