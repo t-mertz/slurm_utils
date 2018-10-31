@@ -25,6 +25,7 @@ def submit(filename, firstmatch=False):
 
     for cur_resource in requested_resources:
         idle_resources.extend(find_optimal_resources(hwdata, cur_resource, idle=True))
+        add_max_resources(idle_resources, hwdata.filter_partition([cur_resource.partition()]))
 
         queued_resources.extend(find_optimal_resources(hwdata, cur_resource, idle=False))
         # if opt is None:
@@ -39,6 +40,7 @@ def submit(filename, firstmatch=False):
         for rres in queued_resources:
             if rres in idle_resources:
                 queued_resources.remove(rres)   # remove duplicates, prefer idle
+
         summary_txt = get_resource_summary(idle_resources, queued_resources)
         opt_resource = get_option_from_user(summary_txt, idle_resources, queued_resources)
     
@@ -174,9 +176,10 @@ def get_resource_summary(idle, queued):
     return output_txt
 
 def add_max_resources(idle_res, hwinfo):
+    hwinfo_idle = hwinfo.filter_idle()
     idle_partitions = [r.partition() for r in idle_res]
-    max_resources = resources.get_maximal_resources(hwinfo)
-    for p in np.unique(hwinfo['partition']):
-        if p not in idle_partitions:
+    max_resources = resources.get_maximal_resources(hwinfo_idle)
+    for p in np.unique(hwinfo_idle['partition']):
+        if p not in idle_partitions:# and max_resources[p].cpus() > 0:
             idle_res.append(max_resources[p])
 

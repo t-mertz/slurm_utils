@@ -26,7 +26,7 @@ class TestGetResourceSummary(unittest.TestCase):
     def test_print_one_queued(self):
         idle = []
         queued = [resources.Resource('partition', 2, 1, None)]
-        ret = ["(1) partition:       partition, CPUs:    2, nodes:  1, (pending)\n"]
+        ret = ["(1) partition:       partition, CPUs:    2, nodes:  1, (allocated)\n"]
         self.assertEqual(core.get_resource_summary(idle, queued), ret)
 
     def test_print_two_idle_queued(self):
@@ -39,8 +39,8 @@ class TestGetResourceSummary(unittest.TestCase):
         ret = [
             "(1) partition:      partition3, CPUs:    4, nodes:  2, (idle)\n",
             "(2) partition:      partition4, CPUs:    1, nodes:  2, (idle)\n",
-            "(3) partition:       partition, CPUs:    2, nodes:  1, (pending)\n",
-            "(4) partition:      partition1, CPUs:    3, nodes:  1, (pending)\n"
+            "(3) partition:       partition, CPUs:    2, nodes:  1, (allocated)\n",
+            "(4) partition:      partition1, CPUs:    3, nodes:  1, (allocated)\n"
             ]
         self.assertEqual(core.get_resource_summary(idle, queued), ret)
 
@@ -413,6 +413,23 @@ class TestSubmit(unittest.TestCase):
                 core.submit('myfilename')
         core.slurm.sbatch.assert_called_once_with('.', 'asbatch_myfilename')
 
+    @patch("sutils.applications.assistbatch.core.slurm.sbatch", Mock())
+    @patch("sutils.applications.assistbatch.core.slurm.sinfo_detail", Mock())
+    @patch("sutils.applications.assistbatch.core.read_sbatch_file")
+    @patch("sutils.applications.assistbatch.core.slurm.sbatch", MagicMock())
+    @patch("sutils.applications.assistbatch.core.add_max_resources", MagicMock())
+    def test_calls_add_max_resources(self, read):
+        sinfo_stdout = "node01  partition  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n" \
+                +"node02  partition1  1.00  7/8/1/16  2:8:2  alloc  16384  16000  10  infiniband\n"
+        hwinfo = core.slurm.SinfoData(sinfo_stdout)
+        core.slurm.sinfo_detail.return_value = hwinfo 
+        read.return_value = [resources.Resource('partition', 4, None, None)]
+        with patch("sutils.applications.assistbatch.core.input", Mock()) as mock_input:
+            mock_input.return_value = '1'
+            with patch("sutils.applications.assistbatch.core.open", my_mock_open(), create=True):
+                core.submit('myfilename')
+        core.add_max_resources.assert_called_once_with([resources.Resource('partition', 4, 1, None)], hwinfo.filter_partition(['partition']))
+
 class TestAddMaxResources(unittest.TestCase):
     def test_adds_nothing_if_partition_is_idle(self):
         sinfo_stdout = "node01  partition  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n"
@@ -448,13 +465,28 @@ class TestAddMaxResources(unittest.TestCase):
         self.assertEqual(res_idle, [resources.Resource('partition1', 4, 1, None), resources.Resource('partition2', 4, 1, None)])
 
     @patch("sutils.slurm_interface.resources.get_maximal_resources", create=True)
-    #@patch("sutils.applications.assistbatch.core.resources.get_maximal_resources")
     def test_calls_get_maximal_resources(self, mock_get_max):
         sinfo_stdout = "node01  partition1  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n" \
                 + "node01  partition2  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n"
-
+        mock_get_max.return_value.__getitem__.return_value = resources.Resource('', 0, 0, None)
         hwinfo = slurm.SinfoData(sinfo_stdout)
         res_idle = [resources.Resource('partition1', 4, 1, None)]
         core.add_max_resources(res_idle, hwinfo)
         mock_get_max.assert_called_once_with(hwinfo)
+
+    def test_adds_nothing_if_partition_is_allocated(self):
+        sinfo_stdout = "node01  partition  0.00  4/0/0/4  1:4:1  allocated  8192  8000  0  (null)\n"
+        hwinfo = slurm.SinfoData(sinfo_stdout)
+        res_idle = []
+        res_idle_cpy = copy.copy(res_idle)
+        core.add_max_resources(res_idle, hwinfo)
+        self.assertEqual(res_idle, res_idle_cpy)
+
+    def test_adds_nothing_if_partition_is_down(self):
+        sinfo_stdout = "node01  partition  0.00  0/0/4/4  1:4:1  down  8192  8000  0  (null)\n"
+        hwinfo = slurm.SinfoData(sinfo_stdout)
+        res_idle = []
+        res_idle_cpy = copy.copy(res_idle)
+        core.add_max_resources(res_idle, hwinfo)
+        self.assertEqual(res_idle, res_idle_cpy)
 
