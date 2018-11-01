@@ -148,7 +148,7 @@ def write_sbatch_file(filename, resource):
 def get_resource_summary(idle, queued):
     output_txt = []
     total = len(idle) + len(queued)
-    max_decimals = math.ceil(math.log10(total+1))
+    max_decimals = int(math.ceil(math.log10(total+1)))
     format_str = "({index:{decimals}d}) partition: {partition:>15s}, CPUs: {cpus:4d}, nodes: {nodes:2d}, ({status})\n"
     ind = 1
     for res in idle:

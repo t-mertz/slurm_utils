@@ -28,6 +28,7 @@ if len(sys.argv) > 1:
             #        'runscancels', 'runstatus', 'runsubmit', 'scancel'],
             #data_files=[('config', 'config.ini'),]
             packages=setuptools.find_packages('.'),
+            python_requires='>=3.0',
             install_requires=['numpy', 
                               'argparse',
                               #'mpi4py',
