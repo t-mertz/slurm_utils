@@ -34,7 +34,7 @@ def submit(filename, firstmatch=False):
     
 
     found = [res in idle_resources for res in requested_resources]
-    if np.prod(found) and len(found) > 1:
+    if sum(found) and len(found) > 0:
         opt_resource = requested_resources[found.index(True)]
     else:
         for rres in queued_resources:

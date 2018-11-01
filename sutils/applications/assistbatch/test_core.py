@@ -430,6 +430,21 @@ class TestSubmit(unittest.TestCase):
                 core.submit('myfilename')
         core.add_max_resources.assert_called_once_with([resources.Resource('partition', 4, 1, None)], hwinfo.filter_partition(['partition']))
 
+    @patch("sutils.applications.assistbatch.core.slurm.sbatch", Mock())
+    @patch("sutils.applications.assistbatch.core.slurm.sinfo_detail", Mock())
+    @patch("sutils.applications.assistbatch.core.read_sbatch_file")
+    @patch("sutils.applications.assistbatch.core.write_sbatch_file", MagicMock())
+    def test_skips_input_if_request_is_optimal(self, read):
+        sinfo_stdout = "node01  partition  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n" \
+                +"node02  partition1  1.00  7/8/1/16  2:8:2  alloc  16384  16000  10  infiniband\n"
+        core.slurm.sinfo_detail.return_value = core.slurm.SinfoData(sinfo_stdout)
+        read.return_value = [resources.Resource('partition', 4, 1, None)]
+        with patch("sutils.applications.assistbatch.core.get_option_from_user", Mock()) as mock_input:
+            with patch("sutils.applications.assistbatch.core.open", my_mock_open(), create=True):
+                core.submit('myfilename')
+            mock_input.assert_not_called()
+            core.write_sbatch_file.assert_called_once_with('myfilename', resources.Resource('partition', 4, 1, None))
+
 class TestAddMaxResources(unittest.TestCase):
     def test_adds_nothing_if_partition_is_idle(self):
         sinfo_stdout = "node01  partition  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n"
