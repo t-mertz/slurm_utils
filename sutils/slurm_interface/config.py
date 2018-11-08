@@ -295,10 +295,13 @@ class SbatchConfig(ArgumentList):
     class Workdir(ArgOption):
         _option = "--workdir"
     
+    class TestOnly(ToggleOption):
+        _option = "--test_only"
+    
     def __init__(self, begin=None, constraint=None, cpus_per_task=None, error=None,
                  job_name=None, mail_type=None, mem=None, mem_per_cpu=None,
                  mincpus=None, nodes=None, ntasks=None, output=None, partition=None,
-                 time=None, work_dir=None, exclusive=None):
+                 time=None, work_dir=None, exclusive=None, test_only=None):
         """Container for sbatch configuration.
 
         Options are:
@@ -340,6 +343,7 @@ class SbatchConfig(ArgumentList):
         self._args += cls.Time(time).parse()
         self._args += cls.Workdir(work_dir).parse()
         self._args += cls.Exclusive(exclusive).parse()
+        self._args += cls.TestOnly(test_only).parse()
 
 class ScancelConfig(ArgumentList):
     """Container for scancel configuration."""
