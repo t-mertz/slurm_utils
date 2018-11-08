@@ -258,6 +258,9 @@ class SbatchConfig(ArgumentList):
     
     class Error(ArgOption):
         _option = "--error"
+
+    class Exclusive(ToggleOption):
+        _option = "--exclusive"
     
     class Jobname(ArgOption):
         _option = "--job-name"
@@ -295,7 +298,7 @@ class SbatchConfig(ArgumentList):
     def __init__(self, begin=None, constraint=None, cpus_per_task=None, error=None,
                  job_name=None, mail_type=None, mem=None, mem_per_cpu=None,
                  mincpus=None, nodes=None, ntasks=None, output=None, partition=None,
-                 time=None, work_dir=None):
+                 time=None, work_dir=None, exclusive=None):
         """Container for sbatch configuration.
 
         Options are:
@@ -336,6 +339,7 @@ class SbatchConfig(ArgumentList):
         self._args += cls.Partition(partition).parse()
         self._args += cls.Time(time).parse()
         self._args += cls.Workdir(work_dir).parse()
+        self._args += cls.Exclusive(exclusive).parse()
 
 class ScancelConfig(ArgumentList):
     """Container for scancel configuration."""
