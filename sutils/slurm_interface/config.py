@@ -309,6 +309,7 @@ class SbatchConfig(ArgumentList):
         constraint      - e.g. gpu
         cpus_per_task   - min. CPUs per task on one node (use for shared memory applications)
         error           - filename where stderr is written to
+        exclusive       - don't share nodes with other jobs
         job_name        - name of the job
         mail_type       - which mails are to be sent (BEGIN,END,FAIL)
         mem             - memory per node (MB)
@@ -320,6 +321,7 @@ class SbatchConfig(ArgumentList):
                           distributed memory applications)
         output          - filename where stdout is written to
         partition       - request SLURM partition py name
+        test_only       - don't submit, just check when job would start
         time            - maximum runtime of the job
         work_dir        - working directory of the submit script
 
