@@ -7,14 +7,14 @@ import os
 from ..core import core
 from . import fargs
 
-def process_py(func, root_path=".", config_file="config.ini"):
+def process_py(func, root_path=".", config_file="config.ini", start=0):
     try:
         proc = get_processor("python", func, root_path=root_path, config_file=config_file)
     except ValueError as e:
         sys.stdout.write("An error occurred: " + str(e) + "\n")
         sys.exit(1)
 
-    proc.run()
+    proc.run(start=start)
 
 def process_exec(filename):
     try:
@@ -35,8 +35,8 @@ class DataProcessor(core.DataProcessor):
         else:
             raise ValueError("Function must take exactly three arguments (dirname, job_idx, plist).")
         
-    def run(self):
-        self.iterate()
+    def run(self, start=0):
+        self.iterate(start=start)
 
 def get_processor(script_type, func, root_path=".", config_file="config.ini"):
     """Factory function for processors"""

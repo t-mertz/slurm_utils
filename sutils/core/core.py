@@ -235,13 +235,13 @@ class ParameterIterator(object):
             if not common.list_prod([p in self._params.get_names() for p in self._settings.get('par_in_dirname')]):
                 raise RuntimeError("Invalid parameter found in `par_in_dirname` settings.")
 
-    def iterate(self):
+    def iterate(self, start=0):
         """
         Iterate through parameters and call `execute`.
         The method `execute` is overridden by subclasses.
         """
 
-        for job_idx, cur_p in enumerate(self._params):
+        for job_idx, cur_p in enumerate(self._params[start:]):
             self.execute(job_idx, cur_p)
     
     def finalize(self):
