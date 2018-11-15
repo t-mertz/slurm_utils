@@ -170,6 +170,16 @@ class TestResource(unittest.TestCase):
         res = resources.Resource('mypartition', 12, 14, 100)
         self.assertEqual(repr(res), "<Resource object, partition=mypartition, cpus=12, nodes=14, mem=100>")
 
+    def test_conversion_to_dict(self):
+        res = resources.Resource('mypartition', 12, 14, 1000)
+        d = {
+            'partition' : 'mypartition',
+            'ntasks' : 12,
+            'nodes' : 14,
+            'mem' : 1000,
+        }
+        self.assertEqual(res.to_dict(), d)
+
 class TestSubsetInternal(unittest.TestCase):
     def test_empty_and_zero_returns_empty(self):
         self.assertEqual(resources._subset_internal([], 0), [])

@@ -155,6 +155,14 @@ class Resource(object):
             mem=self._mem,
         )
 
+    def to_dict(self):
+        return {
+            'partition' : self._partition,
+            'ntasks'    : self._cpus,
+            'nodes'     : self._nodes,
+            'mem'       : self._mem,
+        }
+
 def get_maximal_resources(hwinfo):
     partitions = np.unique(hwinfo['partition'])
     ncpus = []

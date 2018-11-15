@@ -4,6 +4,7 @@ import copy
 
 from ...slurm_interface import resources as resources
 from ...slurm_interface import api as slurm
+from ...slurm_interface import config
 from . import core
 
 def my_mock_open(*args, **kwargs):
@@ -402,16 +403,25 @@ class TestSubmit(unittest.TestCase):
     @patch("sutils.applications.assistbatch.core.slurm.sinfo_detail", Mock())
     @patch("sutils.applications.assistbatch.core.read_sbatch_file")
     @patch("sutils.applications.assistbatch.core.slurm.sbatch", MagicMock())
-    def test_calls_sbatch(self, read):
+    @patch.object(resources.Resource, 'to_dict')
+    def test_calls_sbatch(self, mock_to_dict, read):
         sinfo_stdout = "node01  partition  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n" \
                 +"node02  partition1  1.00  7/8/1/16  2:8:2  alloc  16384  16000  10  infiniband\n"
         core.slurm.sinfo_detail.return_value = core.slurm.SinfoData(sinfo_stdout)
         read.return_value = [resources.Resource('partition', 4, None, None)]
+        kwargs = {
+            'partition' : 'partition:value',
+            'ntasks' : 'ntasks:value',
+            'nodes' : 'nodes:value',
+            'mem' : 'mem:value',
+        }
+        mock_to_dict.return_value = kwargs
+
         with patch("sutils.applications.assistbatch.core.input", Mock()) as mock_input:
             mock_input.return_value = '1'
             with patch("sutils.applications.assistbatch.core.open", my_mock_open(), create=True):
                 core.submit('myfilename')
-        core.slurm.sbatch.assert_called_once_with('asbatch_myfilename', work_dir='.')
+        core.slurm.sbatch.assert_called_once_with('myfilename', **kwargs)
 
     @patch("sutils.applications.assistbatch.core.slurm.sbatch", Mock())
     @patch("sutils.applications.assistbatch.core.slurm.sinfo_detail", Mock())

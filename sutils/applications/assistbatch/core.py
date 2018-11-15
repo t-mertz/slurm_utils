@@ -6,6 +6,7 @@ import numpy as np  # prod
 
 from ...slurm_interface import api as slurm
 from ...slurm_interface import resources
+from ...slurm_interface import config as slurm_config
 
 if sys.version.startswith('2'):
     input = raw_input   # compatibility with Python2
@@ -48,7 +49,8 @@ def submit(filename, firstmatch=False):
     write_sbatch_file(filename, opt_resource)
 
     # submit the job
-    res = slurm.sbatch('asbatch_'+filename, work_dir='.')
+    #res = slurm.sbatch('asbatch_'+filename, **opt_resource.to_dict())
+    res = slurm.sbatch(filename, **opt_resource.to_dict())
     print(res.stdout())
 
 def get_option_from_user(txt, idle_resources, queued_resources):
