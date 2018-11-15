@@ -48,7 +48,7 @@ def submit(filename, firstmatch=False):
     write_sbatch_file(filename, opt_resource)
 
     # submit the job
-    res = slurm.sbatch('.', 'asbatch_'+filename)
+    res = slurm.sbatch('asbatch_'+filename, work_dir='.')
     print(res.stdout())
 
 def get_option_from_user(txt, idle_resources, queued_resources):

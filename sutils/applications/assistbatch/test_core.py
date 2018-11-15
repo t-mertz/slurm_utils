@@ -411,7 +411,7 @@ class TestSubmit(unittest.TestCase):
             mock_input.return_value = '1'
             with patch("sutils.applications.assistbatch.core.open", my_mock_open(), create=True):
                 core.submit('myfilename')
-        core.slurm.sbatch.assert_called_once_with('.', 'asbatch_myfilename')
+        core.slurm.sbatch.assert_called_once_with('asbatch_myfilename', work_dir='.')
 
     @patch("sutils.applications.assistbatch.core.slurm.sbatch", Mock())
     @patch("sutils.applications.assistbatch.core.slurm.sinfo_detail", Mock())
