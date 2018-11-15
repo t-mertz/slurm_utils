@@ -46,7 +46,7 @@ def submit(filename, firstmatch=False):
         opt_resource = get_option_from_user(summary_txt, idle_resources, queued_resources)
     
     # write new numbers to script file
-    write_sbatch_file(filename, opt_resource)
+    #write_sbatch_file(filename, opt_resource)
 
     # submit the job
     #res = slurm.sbatch('asbatch_'+filename, **opt_resource.to_dict())
