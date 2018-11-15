@@ -452,4 +452,97 @@ class TestSbatchResult(unittest.TestCase):
         stdout_str = "This is the stdout"
         
         self.assertEqual(slurm.SbatchResult(stdout_str).stdout(), stdout_str)
+
+
+class Test_sbatch(unittest.TestCase):
+    @patch("sutils.slurm_interface.api.run_command")
+    @patch("sutils.slurm_interface.config.SbatchConfig")
+    def test_calls_sbatchconfig_once(self, mock_sbatch_config, mock_run_command):
+        mock_run_command.return_value = (0, 0, 0)
+        slurm._sbatch("script")
+        mock_sbatch_config.assert_called_once_with(cpus_per_task=None,
+            mem=None, nodes=None, ntasks=None, partition=None,
+            work_dir=None, exclusive=None, test_only=None
+            )
+
+    @patch("sutils.slurm_interface.api.run_command")
+    def test_calls_runcommand_once(self, mock_run_command):
+        mock_run_command.return_value = (0, 0, 0)
+        slurm._sbatch("script")
+        mock_run_command.assert_called_once_with('sbatch', ['script'])
+
+    @patch("sutils.slurm_interface.api.run_command")
+    def test_raises_runtimeerror_if_call_fails(self, mock_run_command):
+        mock_run_command.return_value = (1, '', '')
+        self.assertRaises(RuntimeError, slurm._sbatch, 'script')
+    
+    @patch("sutils.slurm_interface.api.run_command")
+    def test_returns_stdout_as_string(self, mock_run_command):
+        stdout_str = 'this is stdout'
+        mock_run_command.return_value = (0, stdout_str, '')
+        retval = slurm._sbatch('script')
+        self.assertEqual(retval, stdout_str)
         
+
+class TestSbatch(unittest.TestCase):
+    @patch("sutils.slurm_interface.api._sbatch")
+    def test_calls__sbatch_with_same_arguments(self, mock__sbatch):
+        mock__sbatch.return_value = ""
+        args = ['scriptname']
+        kwargs = {
+                    'cpus_per_task' : 'cpus_per_task:val',
+                    'mem' : 'mem:val',
+                    'nodes' : 'nodes:val',
+                    'ntasks' : 'ntasks:val',
+                    'partition' : 'partition:val',
+                    'work_dir' : 'work_dir:val',
+                    'exclusive' : 'exclusive:val',
+                    'test_only' : 'test_only:val'
+                }
+        slurm.sbatch(*args, **kwargs)
+        mock__sbatch.assert_called_once_with(*args, **kwargs)
+
+    @patch("sutils.slurm_interface.api._sbatch")
+    @patch("sutils.slurm_interface.api.SbatchResult")
+    def test_calls_sbatchresult_with_stdout(self, mock_sbatch_result, mock__sbatch):
+        mock__sbatch.return_value = "retval"
+        args = ['scriptname']
+        kwargs = {
+                    'cpus_per_task' : 'cpus_per_task:val',
+                    'mem' : 'mem:val',
+                    'nodes' : 'nodes:val',
+                    'ntasks' : 'ntasks:val',
+                    'partition' : 'partition:val',
+                    'work_dir' : 'work_dir:val',
+                    'exclusive' : 'exclusive:val',
+                    'test_only' : 'test_only:val'
+                }
+        slurm.sbatch(*args, **kwargs)
+        mock_sbatch_result.assert_called_once_with("retval")
+
+    @patch("sutils.slurm_interface.api._sbatch")
+    @patch("sutils.slurm_interface.api.SbatchResult")
+    def test_returns_result(self, mock_sbatch_result, mock__sbatch):
+        mock__sbatch.return_value = "retval"
+        args = ['scriptname']
+        kwargs = {
+                    'cpus_per_task' : 'cpus_per_task:val',
+                    'mem' : 'mem:val',
+                    'nodes' : 'nodes:val',
+                    'ntasks' : 'ntasks:val',
+                    'partition' : 'partition:val',
+                    'work_dir' : 'work_dir:val',
+                    'exclusive' : 'exclusive:val',
+                    'test_only' : 'test_only:val'
+                }
+        retval = slurm.sbatch(*args, **kwargs)
+        self.assertEqual(retval, slurm.SbatchResult("retval"))
+
+
+"""
+class TestGetBeginPrediction(unittest.TestCase):
+    @patch("sutils.slurm_interface.api._sbatch")
+    def test_calls_sbatch(self, mock_sbatch):
+        slurm.get_begin_prediction('script')
+        mock_sbatch.assert_called_once_with('script', '--test_only')
+"""

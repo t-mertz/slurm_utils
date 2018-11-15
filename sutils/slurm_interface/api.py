@@ -48,16 +48,36 @@ def run_command(cmd, args):
 
     return retval, stdout.decode('utf-8'), stderr.decode('utf-8')
 
-def sbatch(work_dir, *args, **kwargs):
-    named_args = config.SbatchConfig(work_dir=work_dir).to_list()
-    named_args += args # this is to support extra arguments. No guarantee!
-    for arg in kwargs:
-        named_args.append("--{}={}".format(arg, kwargs[arg]))
 
-    retval, stdout, stderr = run_command('sbatch', named_args)
-    
+def _sbatch(script, cpus_per_task=None, mem=None, nodes=None, ntasks=None,
+            partition=None, work_dir=None, exclusive=None, test_only=None):
+    argdict = locals()
+    argdict.pop('script')
+    args = config.SbatchConfig(**argdict).to_list()
+    args.insert(0, script)
+
+    retval, stdout, stderr = run_command('sbatch', args)
+
     if retval != 0:
         raise RuntimeError("Call to `sbatch` failed: \n" + stderr)
+
+    return stdout
+
+#def sbatch(work_dir, *args, **kwargs):
+def sbatch(script, cpus_per_task=None, mem=None, nodes=None, ntasks=None,
+           partition=None, work_dir=None, exclusive=None, test_only=None):
+    #named_args = config.SbatchConfig(work_dir=work_dir).to_list()
+    #named_args += args # this is to support extra arguments. No guarantee!
+    #for arg in kwargs:
+    #    named_args.append("--{}={}".format(arg, kwargs[arg]))
+
+    #retval, stdout, stderr = run_command('sbatch', named_args)
+    
+    #if retval != 0:
+    #    raise RuntimeError("Call to `sbatch` failed: \n" + stderr)
+    stdout = _sbatch(script, cpus_per_task=cpus_per_task, mem=mem,
+                     nodes=nodes, ntasks=ntasks, partition=partition,
+                     work_dir=work_dir, exclusive=exclusive, test_only=test_only)
 
     return SbatchResult(stdout)
 
