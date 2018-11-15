@@ -54,7 +54,7 @@ def _sbatch(script, cpus_per_task=None, mem=None, nodes=None, ntasks=None,
     argdict = locals()
     argdict.pop('script')
     args = config.SbatchConfig(**argdict).to_list()
-    args.insert(0, script)
+    args.append(script)
 
     retval, stdout, stderr = run_command('sbatch', args)
 

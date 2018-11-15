@@ -483,6 +483,24 @@ class Test_sbatch(unittest.TestCase):
         retval = slurm._sbatch('script')
         self.assertEqual(retval, stdout_str)
         
+    @patch("sutils.slurm_interface.api.run_command")
+    def test_calls_runcommand_with_scriptname_as_last_argument(self, mock_run_command):
+        mock_run_command.return_value = (0, 0, 0)
+        kwargs = {
+            'cpus_per_task' : 1,
+            'mem' : 2,
+            'nodes' : 3,
+            'ntasks' : 4,
+            'partition' : 5,
+            'work_dir' : 6,
+            'exclusive' : 7,
+            'test_only' : 8
+        }
+        slurm._sbatch('script', **kwargs)
+        from .. import config
+        args = config.SbatchConfig(**kwargs).to_list()
+        args.append('script')
+        mock_run_command.assert_called_once_with('sbatch', args)
 
 class TestSbatch(unittest.TestCase):
     @patch("sutils.slurm_interface.api._sbatch")
