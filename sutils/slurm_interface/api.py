@@ -50,22 +50,28 @@ def run_command(cmd, args):
 
 
 def _sbatch(script, cpus_per_task=None, mem=None, nodes=None, ntasks=None,
-            partition=None, work_dir=None, exclusive=None, test_only=None):
+            partition=None, work_dir=None, exclusive=None, test_only=None,
+            ignore_error=False):
     argdict = locals()
     argdict.pop('script')
+    argdict.pop('ignore_error')
     args = config.SbatchConfig(**argdict).to_list()
     args.append(script)
 
     retval, stdout, stderr = run_command('sbatch', args)
 
-    if retval != 0:
+    if retval != 0 and not ignore_error:
         raise RuntimeError("Call to `sbatch` failed: \n" + stderr)
+
+    if ignore_error:
+        stdout += stderr
 
     return stdout
 
 #def sbatch(work_dir, *args, **kwargs):
 def sbatch(script, cpus_per_task=None, mem=None, nodes=None, ntasks=None,
-           partition=None, work_dir=None, exclusive=None, test_only=None):
+           partition=None, work_dir=None, exclusive=None, test_only=None,
+           ignore_error=False):
     #named_args = config.SbatchConfig(work_dir=work_dir).to_list()
     #named_args += args # this is to support extra arguments. No guarantee!
     #for arg in kwargs:
@@ -77,7 +83,8 @@ def sbatch(script, cpus_per_task=None, mem=None, nodes=None, ntasks=None,
     #    raise RuntimeError("Call to `sbatch` failed: \n" + stderr)
     stdout = _sbatch(script, cpus_per_task=cpus_per_task, mem=mem,
                      nodes=nodes, ntasks=ntasks, partition=partition,
-                     work_dir=work_dir, exclusive=exclusive, test_only=test_only)
+                     work_dir=work_dir, exclusive=exclusive, test_only=test_only,
+                     ignore_error=ignore_error)
 
     return SbatchResult(stdout)
 

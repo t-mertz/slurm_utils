@@ -20,7 +20,7 @@ class TestGetScheduledStart(unittest.TestCase):
         }
         schedule.get_scheduled_start(script, kwargs)
         kwargs['test_only'] = True
-        mock_sbatch.assert_called_once_with(script, **kwargs)
+        mock_sbatch.assert_called_once_with(script, ignore_error=True, **kwargs)
 
     @patch("sutils.slurm_interface.api.sbatch")
     def test_does_not_change_kwargs(self, mock_sbatch):

@@ -296,7 +296,7 @@ class SbatchConfig(ArgumentList):
         _option = "--workdir"
     
     class TestOnly(ToggleOption):
-        _option = "--test_only"
+        _option = "--test-only"
     
     def __init__(self, begin=None, constraint=None, cpus_per_task=None, error=None,
                  job_name=None, mail_type=None, mem=None, mem_per_cpu=None,

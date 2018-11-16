@@ -7,6 +7,7 @@ import numpy as np  # prod
 from ...slurm_interface import api as slurm
 from ...slurm_interface import resources
 from ...slurm_interface import config as slurm_config
+from ...slurm_interface import schedule
 
 if sys.version.startswith('2'):
     input = raw_input   # compatibility with Python2
@@ -165,6 +166,13 @@ def get_resource_summary(idle, queued):
         ))
         ind += 1
     for res in queued:
+        # time = schedule.get_scheduled_waiting_time("script.sh", res.to_dict())
+        # time = time.total_seconds()
+        # time = int(time) if time >= 0 else 0
+        # days = time // 86400
+        # hours = (time % 86400) // 3600
+        # minutes = ((time % 86400) % 3600 ) // 60
+        # seconds = ((time % 86400) % 3600 ) % 60
         output_txt.append(
             format_str.format(
                 index=ind,
@@ -172,6 +180,7 @@ def get_resource_summary(idle, queued):
                 partition=res.partition(),
                 cpus=res.cpus(),
                 nodes=res.nodes(),
+                #status='allocated'+" "+"{}-{:02d}:{:02d}:{:02d}".format(days, hours, minutes, seconds)
                 status='allocated'
         ))
         ind += 1
