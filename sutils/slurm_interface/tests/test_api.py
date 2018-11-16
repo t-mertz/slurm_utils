@@ -515,7 +515,8 @@ class TestSbatch(unittest.TestCase):
                     'partition' : 'partition:val',
                     'work_dir' : 'work_dir:val',
                     'exclusive' : 'exclusive:val',
-                    'test_only' : 'test_only:val'
+                    'test_only' : 'test_only:val',
+                    'ignore_error' : 'ignore_error:val'
                 }
         slurm.sbatch(*args, **kwargs)
         mock__sbatch.assert_called_once_with(*args, **kwargs)

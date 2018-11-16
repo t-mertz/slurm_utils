@@ -19,7 +19,7 @@ class TestSbatchConfig(unittest.TestCase):
 
     def test_test_only_is_appended(self):
         conf = config.SbatchConfig(test_only=True)
-        self.assertEqual(conf.to_list(), ["--test_only"])
+        self.assertEqual(conf.to_list(), ["--test-only"])
 
     def test_test_only_is_ignored(self):
         conf = config.SbatchConfig(test_only=False)

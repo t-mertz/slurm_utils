@@ -421,7 +421,7 @@ class TestSubmit(unittest.TestCase):
             mock_input.return_value = '1'
             with patch("sutils.applications.assistbatch.core.open", my_mock_open(), create=True):
                 core.submit('myfilename')
-        core.slurm.sbatch.assert_called_once_with('myfilename', **kwargs)
+        core.slurm.sbatch.assert_called_once_with('myfilename', exclusive=True, **kwargs)
 
     @patch("sutils.applications.assistbatch.core.slurm.sbatch", Mock())
     @patch("sutils.applications.assistbatch.core.slurm.sinfo_detail", Mock())
@@ -454,7 +454,7 @@ class TestSubmit(unittest.TestCase):
                 core.submit('myfilename')
             mock_input.assert_not_called()
             #core.write_sbatch_file.assert_called_once_with('myfilename', resources.Resource('partition', 4, 1, None))
-            core.slurm.sbatch.assert_called_once_with('myfilename', **resources.Resource('partition', 4, 1, None).to_dict())
+            core.slurm.sbatch.assert_called_once_with('myfilename', exclusive=True, **resources.Resource('partition', 4, 1, None).to_dict())
 
 class TestAddMaxResources(unittest.TestCase):
     def test_adds_nothing_if_partition_is_idle(self):
