@@ -7,3 +7,6 @@ def get_file_extension(filename):
         return tmp[-1]
     else:
         return ''
+
+def is_executable(filename):
+    return os.access(filename, os.X_OK)

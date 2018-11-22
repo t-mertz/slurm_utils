@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 import os
 
 from . import core
@@ -39,3 +40,15 @@ class TestGetFileExtension(unittest.TestCase):
     def test_py_in_path(self):
         filename = os.path.join(self._path, self._pyfilename)
         self.assertEqual(core.get_file_extension(filename), 'py')
+
+class TestIsExecutable(unittest.TestCase):
+    @patch("sutils.applications.process.core.os.access")
+    def test_calls_os_access(self, mock_access):
+        core.is_executable("filename")
+        mock_access.assert_called_once_with("filename", os.X_OK)
+
+    @patch("sutils.applications.process.core.os.access")
+    def test_returns_os_access(self, mock_access):
+        mock_access.return_value = "this is the return value"
+        ret = core.is_executable("filename")
+        self.assertEqual(ret, mock_access.return_value)
