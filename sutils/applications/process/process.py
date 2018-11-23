@@ -7,7 +7,7 @@ from . import core
 def run(options):
     if options['filename'] is not None:
         if os.path.exists(options['filename']):
-            process_exec(options['filename'])
+            core.run_process(options['filename'])
         else:
             sys.stderr.write("file does not exist.\n")
     else:
