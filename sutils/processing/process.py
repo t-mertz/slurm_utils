@@ -65,10 +65,10 @@ def get_processor(script_type, func, root_path=".", config_file="config.ini"):
     else:
         raise NotImplementedError(script_type)
 
-class ShellProcessor(core.ParameterIterator):
+class ShellProcessor(core.DataProcessor):
     """Run shell script on data."""
-    def __init__(self, script_name):
-        super(ShellProcessor, self).__init__()
+    def __init__(self, script_name, root_path=None, config_file=None):
+        super(ShellProcessor, self).__init__(root_path=root_path, config_file=config_file)
         self._script_name = script_name
 
     def process(self, dirname, job_idx, plist):
@@ -78,10 +78,13 @@ class ShellProcessor(core.ParameterIterator):
         sys.stdout.write(p.stdout)
         sys.stderr.write(p.stderr)
 
-class ExternalProcessor(core.ParameterIterator):
+    def run(self, start=0):
+        self.iterate(start=start)
+
+class ExternalProcessor(core.DataProcessor):
     """Run external program on data."""
-    def __init__(self, filename):
-        super(ExternalProcessor, self).__init__()
+    def __init__(self, filename, root_path=None, config_file=None):
+        super(ExternalProcessor, self).__init__(root_path=root_path, config_file=config_file)
         filename = os.path.join("..", filename) # ParameterIterator cd's into job-dirs
         if not os.access(filename, os.F_OK):
             raise OSError("File {} does not exist.".format(filename))
@@ -94,3 +97,6 @@ class ExternalProcessor(core.ParameterIterator):
         p.wait()
         sys.stdout.write(p.stdout)
         sys.stderr.write(p.stderr)
+
+    def run(self, start=0):
+        self.iterate(start=start)
