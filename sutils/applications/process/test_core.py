@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 import os
 
 from . import core
@@ -52,3 +52,44 @@ class TestIsExecutable(unittest.TestCase):
         mock_access.return_value = "this is the return value"
         ret = core.is_executable("filename")
         self.assertEqual(ret, mock_access.return_value)
+
+class TestRunProcess(unittest.TestCase):
+    @patch("sutils.applications.process.core.get_file_extension")
+    @patch("sutils.applications.process.core.is_executable", Mock())
+    @patch("sutils.processing.process.get_processor", Mock())
+    def test_calls_get_file_extension(self, mock_get_file_extension):
+        core.run_process("filename")
+        mock_get_file_extension.assert_called_once_with("filename")
+
+    @patch("sutils.applications.process.core.get_file_extension")
+    @patch("sutils.applications.process.core.is_executable")
+    @patch("sutils.processing.process.get_processor", Mock())
+    def test_calls_is_executable(self, mock_is_executable, mock_get_file_extension):
+        core.run_process("filename")
+        mock_is_executable.assert_called_once_with("filename")
+
+    @patch("sutils.applications.process.core.is_executable")
+    @patch("sutils.processing.process.get_processor")
+    def test_calls_get_processor_exec(self, mock_get_processor, mock_is_executable):
+        mock_is_executable.return_value = True
+        core.run_process("filename")
+        mock_get_processor.assert_called_once_with("external", "filename")
+
+    @patch("sutils.applications.process.core.is_executable")
+    @patch("sutils.processing.process.get_processor")
+    def test_calls_get_processor_noexec_shell(self, mock_get_processor, mock_is_executable):
+        mock_is_executable.return_value = False
+        core.run_process("filename.sh")
+        mock_get_processor.assert_called_once_with("bash", "filename.sh")
+
+    @patch("sutils.applications.process.core.is_executable")
+    @patch("sutils.processing.process.get_processor")
+    def test_calls_get_processor_noexec_py(self, mock_get_processor, mock_is_executable):
+        mock_is_executable.return_value = False
+        core.run_process("filename.py")
+        mock_get_processor.assert_called_once_with("python.script", "filename.py")
+
+    @patch("sutils.processing.process.get_processor")
+    def test_calls_process_on_processor(self, mock_get_processor):
+        core.run_process("filename.py")
+        mock_get_processor.return_value.process.assert_called_once_with()
