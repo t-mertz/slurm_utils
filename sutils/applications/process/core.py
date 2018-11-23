@@ -24,4 +24,4 @@ def run_process(filename):
     elif fext == 'py':
         p = proc_impl.get_processor('python.script', filename)
 
-    p.process()
+    p.run()

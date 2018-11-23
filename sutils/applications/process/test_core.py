@@ -92,4 +92,4 @@ class TestRunProcess(unittest.TestCase):
     @patch("sutils.processing.process.get_processor")
     def test_calls_process_on_processor(self, mock_get_processor):
         core.run_process("filename.py")
-        mock_get_processor.return_value.process.assert_called_once_with()
+        mock_get_processor.return_value.run.assert_called_once_with()
