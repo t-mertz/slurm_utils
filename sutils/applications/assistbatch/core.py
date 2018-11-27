@@ -25,7 +25,13 @@ def submit(filename, firstmatch=False):
         # query user if this was intentional
         pass
 
+    max_mem = resources.get_maximal_memory(hwdata)
+    max_cpus = None
+
     for cur_resource in requested_resources:
+        req_mem = 0 if cur_resource.memory() is None else cur_resource.memory()
+        if req_mem > max_mem[cur_resource.partition()]:
+            continue    # skip partition if memory requirement cannot be fulfilled
         idle_resources.extend(find_optimal_resources(hwdata, cur_resource, idle=True))
         add_max_resources(idle_resources, hwdata.filter_partition([cur_resource.partition()]))
 
@@ -33,7 +39,11 @@ def submit(filename, firstmatch=False):
         # if opt is None:
         #     print("Error: Number of requested cores exceeds total number of "\
         #             +"partition {}. \nAborting.".format(partition))
-    
+
+
+    if len(idle_resources) == 0 and len(queued_resources) == 0:
+        sys.stdout.write("Not enough resources available.\n")
+        return 1
 
     found = [res in idle_resources for res in requested_resources]
     if sum(found) and len(found) > 0:

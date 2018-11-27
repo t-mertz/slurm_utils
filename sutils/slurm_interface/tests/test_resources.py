@@ -245,4 +245,20 @@ class TestGetMaximalResources(unittest.TestCase):
         sinfo_data = slurm.SinfoData('')
         self.assertEqual(resources.get_maximal_resources(sinfo_data), {})
 
+class TestGetMaximalMemory(unittest.TestCase):
+    def test_returns_single_memory(self):
+        sinfo_data = slurm.SinfoData(SINFO_STDOUT_TWO_LINE)
+        self.assertEqual(resources.get_maximal_memory(sinfo_data), {'partition': 8192})
+
+    def test_returns_max_of_multiple(self):
+        sout = "node01  partition1  0.00  4/0/0/4  1:4:1  idle  8192  8000  0  (null)\n"\
+               +"node02  partition2  0.00  4/0/0/4  1:4:1  idle  16384  8000  0  (null)\n"\
+               +"node02  partition2  0.00  4/0/0/4  1:4:1  idle  8192  8000  0  (null)\n"
+        sinfo_data = slurm.SinfoData(sout)
+        res = {'partition1': 8192, 'partition2': 16384}
+        self.assertEqual(resources.get_maximal_memory(sinfo_data), res)
+
+    def test_returns_empty_dict_if_empty_input(self):
+        sinfo_data = slurm.SinfoData('')
+        self.assertEqual(resources.get_maximal_memory(sinfo_data), {})
 
