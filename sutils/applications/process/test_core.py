@@ -73,21 +73,21 @@ class TestRunProcess(unittest.TestCase):
     def test_calls_get_processor_exec(self, mock_get_processor, mock_is_executable):
         mock_is_executable.return_value = True
         core.run_process("filename")
-        mock_get_processor.assert_called_once_with("external", "filename")
+        mock_get_processor.assert_called_once_with("external", "filename", root_path='.', config_file='config.ini')
 
     @patch("sutils.applications.process.core.is_executable")
     @patch("sutils.processing.process.get_processor")
     def test_calls_get_processor_noexec_shell(self, mock_get_processor, mock_is_executable):
         mock_is_executable.return_value = False
         core.run_process("filename.sh")
-        mock_get_processor.assert_called_once_with("bash", "filename.sh")
+        mock_get_processor.assert_called_once_with("bash", "filename.sh", root_path='.', config_file='config.ini')
 
     @patch("sutils.applications.process.core.is_executable")
     @patch("sutils.processing.process.get_processor")
     def test_calls_get_processor_noexec_py(self, mock_get_processor, mock_is_executable):
         mock_is_executable.return_value = False
         core.run_process("filename.py")
-        mock_get_processor.assert_called_once_with("python.script", "filename.py")
+        mock_get_processor.assert_called_once_with("python.script", "filename.py", root_path='.', config_file='config.ini')
 
     @patch("sutils.processing.process.get_processor")
     def test_calls_process_on_processor(self, mock_get_processor):
