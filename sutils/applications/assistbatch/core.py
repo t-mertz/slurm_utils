@@ -101,6 +101,7 @@ def read_sbatch_file(filename):
     ntasks = None
     partitions = None
     mem = None
+    mem_per_cpu = None
 
     with open(filename, 'r') as infile:
         for line in infile:
@@ -113,11 +114,16 @@ def read_sbatch_file(filename):
                     partitions = line.split('=')[1].strip().split(',')
                 elif 'mem=' in line:
                     mem = int(line.split('=')[1])
+                elif 'mem-per-cpu' in line:
+                    mem_per_cpu = int(line.split('=')[1])
 
     if partitions is None:
         raise RuntimeError("partition not specified")
     if ntasks is None:
         raise RuntimeError("ntasks not specified")
+    
+    if mem_per_cpu is not None:
+        mem = mem_per_cpu * ntasks
 
     return [resources.Resource(p, ntasks, nodes, mem) for p in partitions]
 
