@@ -353,6 +353,14 @@ class SinfoData(object):
         self._copy_info_data(inst, inds=inds)
 
         return inst
+    
+    def filter_mem_per_cpu(self, m):
+        """Create a new instance containing only nodes with at least m MB of memory per CPU."""
+        inst = SinfoData()
+        inds = np.argwhere(self._info_data['memory'] / self._info_data['allcpus'] >= m).flatten()
+        self._copy_info_data(inst, inds=inds)
+
+        return inst
 
     def filter_idle(self):
         """Create a new instance containing only idle nodes."""

@@ -287,6 +287,29 @@ class TestSinfoData(unittest.TestCase):
         
         self.assertEqual(infodat1, filtered)
 
+    def test_filter_mem_per_cpu_0_returns_copy(self):
+        infodat = slurm.SinfoData(self.info_str)
+
+        filtered = infodat.filter_mem_per_cpu(0)
+        
+        self.assertEqual(infodat, filtered)
+
+    def test_filter_mem_per_cpu_2000_returns_only_first_node(self):
+        infodat = slurm.SinfoData(self.info_str)
+
+        filtered = infodat.filter_mem_per_cpu(2000)
+        infodat1 = slurm.SinfoData(self.info_str.split('\n')[0])
+        
+        self.assertEqual(infodat1, filtered)
+    
+    def test_filter_mem_per_cpu_2000_returns_empty(self):
+        infodat = slurm.SinfoData(self.info_str)
+
+        filtered = infodat.filter_mem_per_cpu(2000)
+        infodat1 = slurm.SinfoData("")
+        
+        self.assertEqual(infodat1, filtered)
+
     def test_copy_is_equal(self):
         infodat1 = slurm.SinfoData(self.info_str)
         infodat2 = slurm.SinfoData(self.info_str)
