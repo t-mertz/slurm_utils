@@ -447,7 +447,7 @@ class JobDB(object):
         
         # initialize as False
         # creating an empty db file updates value to True
-        self._isempty = False
+        self._isempty = self.isempty()
 
         if not self.check_job_db():
             self.create_empty_job_db()
@@ -505,7 +505,11 @@ class JobDB(object):
         """
         Check if empty flag attribute is set.
         """
-        return self._isempty
+        if self.check_job_db():
+            with open(self._db_path, 'rb') as db_file:
+                db_data = pickle.load(db_file)
+            return len(db_data) == 0
+        return True
     
     def read_job_db(self):
         """
@@ -876,7 +880,7 @@ class Submitter(ParameterIterator, JobDB):
             self.log("> Test mode active, not submitting.")
             out_str = "JOB 1 SUBMITTED"
         
-        message = out_str.strip()
+        message = out_str.decode('utf-8').strip()
 
         # determine if submission was successful
         if "FAILED" in message.upper():
@@ -1354,3 +1358,4 @@ def main(mode, *argv):
         print("ERROR: Method {} not implemented.".format(str(e)))
     except Exception as e:
         print("An error occured: " + str(e))
+        raise
