@@ -9,7 +9,7 @@ import numpy as np
 
 from . import config
 from ..test import test
-from ..utils.util import to_list, stringify_list
+from ..utils.util import to_list, stringify_list, make_float
 
 SINFO_DETAIL_FORMAT = "nodehost:.30,"\
                     + "partitionname:.20,"\
@@ -266,7 +266,14 @@ class SinfoData(object):
         else:
             info['nodehost'] = np.copy(res._data_array[:, 0]).astype(np.unicode_)
             info['partition'] = np.copy(res._data_array[:, 1]).astype(np.unicode_)
-            info['cpusload'] = np.copy(res._data_array[:, 2]).astype(float)
+            #try:
+            #    info['cpusload'] = np.copy(res._data_array[:, 2]).astype(float)
+            #except ValueError:
+            #    inds = is_float(res._data_array[:, 2])
+            #    tmp = np.copy(res._data_array[:, 2])
+            #    tmp[np.logical_not(inds)] = 0.0
+            #    info['cpusload'] = tmp.astype(float)
+            info['cpusload'] = make_float(np.copy(res._data_array[:, 2])).astype(float)
 
             tmp = np.array([s.split('/') for s in res._data_array[:, 3]], dtype=int)
             info['alloccpus'] = tmp[:, 0]
@@ -280,9 +287,9 @@ class SinfoData(object):
             info['threads_per_core'] = tmp[:, 2]
 
             info['state'] = np.copy(res._data_array[:, 5]).astype(np.unicode_)
-            info['memory'] = np.copy(res._data_array[:, 6]).astype(int)
-            info['freememory'] = np.copy(res._data_array[:, 7]).astype(int)
-            info['allocmemory'] = np.copy(res._data_array[:, 8]).astype(int)
+            info['memory'] = make_float(np.copy(res._data_array[:, 6])).astype(int)
+            info['freememory'] = make_float(np.copy(res._data_array[:, 7])).astype(int)
+            info['allocmemory'] = make_float(np.copy(res._data_array[:, 8])).astype(int)
 
             info['features'] = np.copy(res._data_array[:, 9]).astype(np.unicode_)
         

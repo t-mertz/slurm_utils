@@ -199,6 +199,25 @@ class TestSinfoData(unittest.TestCase):
         infodat = slurm.SinfoData(res)
         self.assertRaises(KeyError, infodat.__getitem__, 'abc')
 
+    def test_conversion_error_sets_0_load(self):
+        retval = "node01  partition  N/A  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n"
+        res = slurm.SinfoResult(retval)
+
+        infodat = slurm.SinfoData(res)
+        
+        self.assertEqual(infodat._info_data['cpusload'], 0.0)
+
+    def test_conversion_error_sets_0_memory(self):
+        retval = "node01  partition  0.0  0/4/0/4  1:4:1  idle  N/A  N/A  N/A  (null)\n"
+        res = slurm.SinfoResult(retval)
+
+        infodat = slurm.SinfoData(res)
+        
+        self.assertEqual(infodat._info_data['memory'], 0.0)
+        self.assertEqual(infodat._info_data['freememory'], 0.0)
+        self.assertEqual(infodat._info_data['allocmemory'], 0.0)
+
+
     def test_filter_one_partition(self):
         retval = "node01  partition  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n" \
                 +"node02  partition1  1.00  7/8/1/16  2:8:2  alloc  16384  16000  10  infiniband\n"

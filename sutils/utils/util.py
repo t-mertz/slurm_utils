@@ -427,3 +427,34 @@ def srange(start, stop=None, step=1):
 def stringify_list(list):
     """Convert every item to string."""
     return [str(i) for i in list]
+
+def is_float(arr):
+    """Check if elements of an array can be converted to float."""
+    if not hasattr(arr, '__len__') or type(arr) == str:
+        try:
+            float(arr)
+            return True
+        except ValueError:
+            return False
+    else:
+        tmp = np.zeros_like(arr, dtype=bool)
+        for i,v in enumerate(arr):
+            try:
+                float(v)
+                tmp[i] = True
+            except ValueError:
+                tmp[i] = False
+        return tmp
+    
+
+def make_float(arr, default=0.):
+    """Convert elements to float, default upon conversion error."""
+    tmp = []
+    for v in arr:
+        try:
+            tmp.append(float(v))
+        except ValueError:
+            tmp.append(default)
+    return np.array(tmp)
+
+
