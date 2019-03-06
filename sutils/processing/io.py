@@ -29,3 +29,15 @@ def run_protect(func):
             print(e)
 
     return tmp
+
+def save_array(index, **kwargs):
+    """Save data as array in numpy syntax.
+
+    This works the same way as the numpy.savez function.
+    """
+    pass
+    # first caller needs to create array
+
+    # load array and store data into it
+
+    # save array
