@@ -199,6 +199,25 @@ class TestSinfoData(unittest.TestCase):
         infodat = slurm.SinfoData(res)
         self.assertRaises(KeyError, infodat.__getitem__, 'abc')
 
+    def test_conversion_error_sets_0_load(self):
+        retval = "node01  partition  N/A  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n"
+        res = slurm.SinfoResult(retval)
+
+        infodat = slurm.SinfoData(res)
+        
+        self.assertEqual(infodat._info_data['cpusload'], 0.0)
+
+    def test_conversion_error_sets_0_memory(self):
+        retval = "node01  partition  0.0  0/4/0/4  1:4:1  idle  N/A  N/A  N/A  (null)\n"
+        res = slurm.SinfoResult(retval)
+
+        infodat = slurm.SinfoData(res)
+        
+        self.assertEqual(infodat._info_data['memory'], 0.0)
+        self.assertEqual(infodat._info_data['freememory'], 0.0)
+        self.assertEqual(infodat._info_data['allocmemory'], 0.0)
+
+
     def test_filter_one_partition(self):
         retval = "node01  partition  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n" \
                 +"node02  partition1  1.00  7/8/1/16  2:8:2  alloc  16384  16000  10  infiniband\n"
@@ -284,6 +303,29 @@ class TestSinfoData(unittest.TestCase):
 
         filtered = infodat.filter_memory(10000)
         infodat1 = slurm.SinfoData(self.info_str.split('\n')[1])
+        
+        self.assertEqual(infodat1, filtered)
+
+    def test_filter_mem_per_cpu_0_returns_copy(self):
+        infodat = slurm.SinfoData(self.info_str)
+
+        filtered = infodat.filter_mem_per_cpu(0)
+        
+        self.assertEqual(infodat, filtered)
+
+    def test_filter_mem_per_cpu_2000_returns_only_first_node(self):
+        infodat = slurm.SinfoData(self.info_str)
+
+        filtered = infodat.filter_mem_per_cpu(2000)
+        infodat1 = slurm.SinfoData(self.info_str.split('\n')[0])
+        
+        self.assertEqual(infodat1, filtered)
+    
+    def test_filter_mem_per_cpu_2000_returns_empty(self):
+        infodat = slurm.SinfoData(self.info_str)
+
+        filtered = infodat.filter_mem_per_cpu(2000)
+        infodat1 = slurm.SinfoData("")
         
         self.assertEqual(infodat1, filtered)
 

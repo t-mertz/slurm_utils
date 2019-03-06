@@ -174,3 +174,11 @@ def get_maximal_resources(hwinfo):
 
     return {p: Resource(partitions[i], ncpus[i], nnodes[i], None) for i,p in enumerate(partitions)}
     
+def get_maximal_memory(hwinfo):
+    max_mem = {}
+    partitions = np.unique(hwinfo['partition'])
+    for p in partitions:
+        tmp = hwinfo.filter_partition([p])
+        max_mem[p] = tmp['memory'].max()
+    
+    return max_mem

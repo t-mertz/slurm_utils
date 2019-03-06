@@ -25,7 +25,13 @@ def submit(filename, firstmatch=False):
         # query user if this was intentional
         pass
 
+    max_mem = resources.get_maximal_memory(hwdata)
+    max_cpus = None
+
     for cur_resource in requested_resources:
+        req_mem = 0 if cur_resource.memory() is None else cur_resource.memory()
+        if req_mem > max_mem[cur_resource.partition()]:
+            continue    # skip partition if memory requirement cannot be fulfilled
         idle_resources.extend(find_optimal_resources(hwdata, cur_resource, idle=True))
         add_max_resources(idle_resources, hwdata.filter_partition([cur_resource.partition()]))
 
@@ -33,7 +39,11 @@ def submit(filename, firstmatch=False):
         # if opt is None:
         #     print("Error: Number of requested cores exceeds total number of "\
         #             +"partition {}. \nAborting.".format(partition))
-    
+
+
+    if len(idle_resources) == 0 and len(queued_resources) == 0:
+        sys.stdout.write("Not enough resources available.\n")
+        return 1
 
     found = [res in idle_resources for res in requested_resources]
     if sum(found) and len(found) > 0:
@@ -101,6 +111,7 @@ def read_sbatch_file(filename):
     ntasks = None
     partitions = None
     mem = None
+    mem_per_cpu = None
 
     with open(filename, 'r') as infile:
         for line in infile:
@@ -113,11 +124,16 @@ def read_sbatch_file(filename):
                     partitions = line.split('=')[1].strip().split(',')
                 elif 'mem=' in line:
                     mem = int(line.split('=')[1])
+                elif 'mem-per-cpu' in line:
+                    mem_per_cpu = int(line.split('=')[1])
 
     if partitions is None:
         raise RuntimeError("partition not specified")
     if ntasks is None:
         raise RuntimeError("ntasks not specified")
+    
+    if mem_per_cpu is not None:
+        mem = mem_per_cpu * ntasks
 
     return [resources.Resource(p, ntasks, nodes, mem) for p in partitions]
 
