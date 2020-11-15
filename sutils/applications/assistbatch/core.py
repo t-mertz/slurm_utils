@@ -32,10 +32,13 @@ def submit(filename, firstmatch=False):
         req_mem = 0 if cur_resource.memory() is None else cur_resource.memory()
         if req_mem > max_mem[cur_resource.partition()]:
             continue    # skip partition if memory requirement cannot be fulfilled
-        idle_resources.extend(find_optimal_resources(hwdata, cur_resource, idle=True))
-        add_max_resources(idle_resources, hwdata.filter_partition([cur_resource.partition()]))
+        idle_resources.extend(find_optimal_resources(hwdata.filter_mem_per_cpu([cur_resource.mem_per_cpu()]),
+                                                     cur_resource, idle=True))
+        add_max_resources(idle_resources, 
+                          hwdata.filter_partition([cur_resource.partition()]).filter_mem_per_cpu([cur_resource.mem_per_cpu()]))
 
-        queued_resources.extend(find_optimal_resources(hwdata, cur_resource, idle=False))
+        queued_resources.extend(find_optimal_resources(hwdata.filter_mem_per_cpu([cur_resource.mem_per_cpu()]), 
+                                cur_resource, idle=False))
         # if opt is None:
         #     print("Error: Number of requested cores exceeds total number of "\
         #             +"partition {}. \nAborting.".format(partition))
@@ -61,9 +64,12 @@ def submit(filename, firstmatch=False):
 
     # submit the job
     #res = slurm.sbatch('asbatch_'+filename, **opt_resource.to_dict())
+    del opt_resource["memory"]      # don't change what's in the script
+    del opt_resource["mem-per-cpu"] #
+
     try:
         res = slurm.sbatch(filename, exclusive=True, **opt_resource.to_dict())
-    except RuntimeError e:
+    except RuntimeError as e:
         print(f"Sbatch error:\n{e}")
         sys.exit(1)
     print(res.stdout())

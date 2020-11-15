@@ -118,11 +118,12 @@ def _subset_internal(cpus, n, _buf=None):
 
 class Resource(object):
     """Container for collection of CPUs."""
-    def __init__(self, partition, cpus, nodes, mem):
+    def __init__(self, partition, cpus, nodes, mem=None, mem_per_cpu=None):
         self._cpus = cpus
         self._partition = partition
         self._nodes = nodes
         self._mem = mem
+        self._mem_per_cpu = mem_per_cpu
 
     def partition(self):
         return self._partition
@@ -136,23 +137,29 @@ class Resource(object):
     def memory(self):
         return self._mem
     
+    def mem_per_cpu(self):
+        return self._mem_per_cpu
+    
     def __eq__(self, obj):
         if isinstance(obj, Resource):
             cond1 = self._cpus == obj._cpus
             cond2 = self._partition == obj._partition
             cond3 = self._nodes == obj._nodes
             cond4 = self._mem == obj._mem
-            return cond1 and cond2 and cond3 and cond4
+            cond5 = self._mem_per_cpu == obj._mem_per_cpu
+            return cond1 and cond2 and cond3 and cond4 and cond5
         else:
             False
 
     def __repr__(self):
-        format_str = "<Resource object, partition={partition}, cpus={cpus}, nodes={nodes}, mem={mem}>"
+        format_str = "<Resource object, partition={partition}, cpus={cpus}, nodes={nodes}, mem={mem}, \
+        mem_per_cpu={mem_per_cpu}>"
         return format_str.format(
             partition=self._partition,
             cpus=self._cpus,
             nodes=self._nodes,
             mem=self._mem,
+            mem_per_cpu=self._mem_per_cpu,
         )
 
     def to_dict(self):
@@ -161,24 +168,27 @@ class Resource(object):
             'ntasks'    : self._cpus,
             'nodes'     : self._nodes,
             'mem'       : self._mem,
+            'mem_per_cpu': self._mem_per_cpu,
         }
 
 def get_maximal_resources(hwinfo):
     partitions = np.unique(hwinfo['partition'])
     ncpus = []
     nnodes = []
+    mem = []
     for p in partitions:
         tmp = hwinfo.filter_partition([p])
         ncpus.append(tmp['allcpus'].sum())
         nnodes.append(len(tmp['allcpus']))
+        mem.append(tmp["memory"].sum())
 
-    return {p: Resource(partitions[i], ncpus[i], nnodes[i], None) for i,p in enumerate(partitions)}
+    return {p: Resource(partitions[i], ncpus[i], nnodes[i], mem[i]) for i,p in enumerate(partitions)}
     
 def get_maximal_memory(hwinfo):
     max_mem = {}
     partitions = np.unique(hwinfo['partition'])
     for p in partitions:
         tmp = hwinfo.filter_partition([p])
-        max_mem[p] = tmp['memory'].max()
+        max_mem[p] = tmp['memory'].sum()
     
     return max_mem
