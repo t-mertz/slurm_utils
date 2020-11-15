@@ -61,7 +61,11 @@ def submit(filename, firstmatch=False):
 
     # submit the job
     #res = slurm.sbatch('asbatch_'+filename, **opt_resource.to_dict())
-    res = slurm.sbatch(filename, exclusive=True, **opt_resource.to_dict())
+    try:
+        res = slurm.sbatch(filename, exclusive=True, **opt_resource.to_dict())
+    except RuntimeError e:
+        print(f"Sbatch error:\n{e}")
+        sys.exit(1)
     print(res.stdout())
 
 def get_option_from_user(txt, idle_resources, queued_resources):
