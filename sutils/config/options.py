@@ -36,11 +36,11 @@ class BaseConfigGroup(object):
 
 class ConfigGroup(BaseConfigGroup):
     name = u""
-    members = (,)
+    members = ()
 
 class GeneralGroup(ConfigGroup):
     name = u"general"
-    members = (,)
+    members = ()
 
 class ParameterGroup(ConfigGroup):
     pass
@@ -134,4 +134,4 @@ def parse_option(group_name, option_name, value_str):
 
 def get_default_options():
     """Return the list of all options."""
-    return GROUPS_.itervalues()
+    return GROUPS_.values()
