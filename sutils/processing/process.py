@@ -46,7 +46,7 @@ def get_processor(script_type, func, root_path=".", config_file="config.ini"):
         return DataProcessor(func, root_path, config_file)
     elif script_type.lower() == 'external':
         try:
-            return ExternalProcessor(func)
+            return ExternalProcessor(func, root_path=root_path, config_file=config_file)
         except OSError as e:
             sys.stderr.write(str(e))
             sys.exit(1)
@@ -57,7 +57,7 @@ def get_processor(script_type, func, root_path=".", config_file="config.ini"):
 
     elif script_type.lower() == 'bash':
         try:
-            return ShellProcessor(func)
+            return ShellProcessor(func, root_path=root_path, config_file=config_file)
         except Exception as e:
             sys.stderr.write(str(e))
             sys.exit(1)
@@ -65,32 +65,38 @@ def get_processor(script_type, func, root_path=".", config_file="config.ini"):
     else:
         raise NotImplementedError(script_type)
 
-class ShellProcessor(core.ParameterIterator):
+class ShellProcessor(core.DataProcessor):
     """Run shell script on data."""
-    def __init__(self, script_name):
-        super(ShellProcessor, self).__init__()
-        self._script_name = script_name
+    def __init__(self, script_name, root_path=None, config_file=None):
+        super(ShellProcessor, self).__init__(root_path=root_path, config_file=config_file)
+        self._script_name = os.path.abspath(script_name)
 
     def process(self, dirname, job_idx, plist):
         # maybe copy the script file to a temporary file in the job_directory
         p = subprocess.Popen(['bash', self._script_name], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-        p.wait()
-        sys.stdout.write(p.stdout)
-        sys.stderr.write(p.stderr)
+        stdout, stderr = p.communicate()
+        sys.stdout.write(stdout.decode('utf-8'))
+        sys.stderr.write(stderr.decode('utf-8'))
 
-class ExternalProcessor(core.ParameterIterator):
+    def run(self, start=0):
+        self.iterate(start=start)
+
+class ExternalProcessor(core.DataProcessor):
     """Run external program on data."""
-    def __init__(self, filename):
-        super(ExternalProcessor, self).__init__()
+    def __init__(self, filename, root_path=None, config_file=None):
+        super(ExternalProcessor, self).__init__(root_path=root_path, config_file=config_file)
         filename = os.path.join("..", filename) # ParameterIterator cd's into job-dirs
         if not os.access(filename, os.F_OK):
             raise OSError("File {} does not exist.".format(filename))
         if not os.access(filename, os.X_OK):
             raise OSError("File {} is not an executable.".format(filename))
-        self._executable = filename
+        self._executable = os.path.abspath(filename)
 
     def process(self, firname, job_idx, plist):
-        p = subprocess.Popen([], executable=self._executable, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-        p.wait()
-        sys.stdout.write(p.stdout)
-        sys.stderr.write(p.stderr)
+        p = subprocess.Popen([self._executable], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        stdout, stderr = p.communicate()
+        sys.stdout.write(stdout.decode('utf-8'))
+        sys.stderr.write(stderr.decode('utf-8'))
+
+    def run(self, start=0):
+        self.iterate(start=start)
