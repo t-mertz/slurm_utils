@@ -8,6 +8,7 @@ from ...slurm_interface import api as slurm
 from ...slurm_interface import resources
 from ...slurm_interface import config as slurm_config
 from ...slurm_interface import schedule
+from . import units
 
 if sys.version.startswith('2'):
     input = raw_input   # compatibility with Python2
@@ -133,9 +134,9 @@ def read_sbatch_file(filename):
                 elif 'partition' in line:
                     partitions = line.split('=')[1].strip().split(',')
                 elif 'mem=' in line:
-                    mem = int(line.split('=')[1])
+                    mem = units.convert_to_base(line.split('=')[1])
                 elif 'mem-per-cpu' in line:
-                    mem_per_cpu = int(line.split('=')[1])
+                    mem_per_cpu = units.convert_to_base(line.split('=')[1])
 
     if partitions is None:
         raise RuntimeError("partition not specified")
