@@ -153,7 +153,7 @@ class Resource(object):
 
     def __repr__(self):
         format_str = "<Resource object, partition={partition}, cpus={cpus}, nodes={nodes}, mem={mem}, \
-        mem_per_cpu={mem_per_cpu}>"
+mem_per_cpu={mem_per_cpu}>"
         return format_str.format(
             partition=self._partition,
             cpus=self._cpus,
@@ -169,6 +169,14 @@ class Resource(object):
             'nodes'     : self._nodes,
             'mem'       : self._mem,
             'mem_per_cpu': self._mem_per_cpu,
+        }
+    
+    def to_short_dict(self):
+        """Does not contain memory"""
+        return {
+            'partition' : self._partition,
+            'ntasks'    : self._cpus,
+            'nodes'     : self._nodes
         }
 
 def get_maximal_resources(hwinfo):
@@ -190,5 +198,14 @@ def get_maximal_memory(hwinfo):
     for p in partitions:
         tmp = hwinfo.filter_partition([p])
         max_mem[p] = tmp['memory'].sum()
+    
+    return max_mem
+
+def get_maximal_mem_per_cpu(hwinfo):
+    max_mem = {}
+    partitions = np.unique(hwinfo['partition'])
+    for p in partitions:
+        tmp = hwinfo.filter_partition([p])
+        max_mem[p] = tmp['memory'].max()
     
     return max_mem
