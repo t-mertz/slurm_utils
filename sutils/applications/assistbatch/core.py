@@ -8,6 +8,7 @@ from ...slurm_interface import api as slurm
 from ...slurm_interface import resources
 from ...slurm_interface import config as slurm_config
 from ...slurm_interface import schedule
+from . import units
 
 if sys.version.startswith('2'):
     input = raw_input   # compatibility with Python2
@@ -32,10 +33,20 @@ def submit(filename, firstmatch=False):
         req_mem = 0 if cur_resource.memory() is None else cur_resource.memory()
         if req_mem > max_mem[cur_resource.partition()]:
             continue    # skip partition if memory requirement cannot be fulfilled
-        idle_resources.extend(find_optimal_resources(hwdata, cur_resource, idle=True))
-        add_max_resources(idle_resources, hwdata.filter_partition([cur_resource.partition()]))
+        
+        if cur_resource.mem_per_cpu() is not None:
+            tmp_hwdata = hwdata.filter_mem_per_cpu([cur_resource.mem_per_cpu()])
+        else:
+            tmp_hwdata = hwdata
+        idle_resources.extend(find_optimal_resources(tmp_hwdata,
+                                                     cur_resource, idle=True))
+        # offer the maximally available resources that are currently idle
+        # if requirements cannot be met
+        add_max_resources(idle_resources, 
+                          tmp_hwdata.filter_partition([cur_resource.partition()]))
 
-        queued_resources.extend(find_optimal_resources(hwdata, cur_resource, idle=False))
+        queued_resources.extend(find_optimal_resources(tmp_hwdata, 
+                                cur_resource, idle=False))
         # if opt is None:
         #     print("Error: Number of requested cores exceeds total number of "\
         #             +"partition {}. \nAborting.".format(partition))
@@ -61,7 +72,12 @@ def submit(filename, firstmatch=False):
 
     # submit the job
     #res = slurm.sbatch('asbatch_'+filename, **opt_resource.to_dict())
-    res = slurm.sbatch(filename, exclusive=True, **opt_resource.to_dict())
+
+    try:
+        res = slurm.sbatch(filename, exclusive=True, **opt_resource.to_short_dict())
+    except RuntimeError as e:
+        print(f"Sbatch error:\n{e}")
+        sys.exit(1)
     print(res.stdout())
 
 def get_option_from_user(txt, idle_resources, queued_resources):
@@ -123,9 +139,9 @@ def read_sbatch_file(filename):
                 elif 'partition' in line:
                     partitions = line.split('=')[1].strip().split(',')
                 elif 'mem=' in line:
-                    mem = int(line.split('=')[1])
+                    mem = units.convert_to_base(line.split('=')[1])
                 elif 'mem-per-cpu' in line:
-                    mem_per_cpu = int(line.split('=')[1])
+                    mem_per_cpu = units.convert_to_base(line.split('=')[1])
 
     if partitions is None:
         raise RuntimeError("partition not specified")
@@ -203,6 +219,9 @@ def get_resource_summary(idle, queued):
     return output_txt
 
 def add_max_resources(idle_res, hwinfo):
+    """For every partition whose idle resources do not meet the requirements
+    add the maximally available idle resources.
+    """
     hwinfo_idle = hwinfo.filter_idle()
     idle_partitions = [r.partition() for r in idle_res]
     max_resources = resources.get_maximal_resources(hwinfo_idle)

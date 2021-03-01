@@ -128,6 +128,14 @@ class TestResource(unittest.TestCase):
         res = resources.Resource('partition', 10, 2, 1000)
         self.assertEqual(res.memory(), 1000)
     
+    def test_mem_defaults_to_none(self):
+        res = resources.Resource('partition', 10, 2)
+        self.assertEqual(res.memory(), None)
+
+    def test_mem_per_cpu_defaults_to_none(self):
+        res = resources.Resource('partition', 10, 2)
+        self.assertEqual(res.mem_per_cpu(), None)
+
     # def test_zero_init_raises_ValueError(self):
     #     self.assertRaises(ValueError, resources.Resource, [])
     #     self.assertRaises(ValueError, resources.Resource, [0])
@@ -166,9 +174,19 @@ class TestResource(unittest.TestCase):
 
         self.assertNotEqual(res1, res2)
 
+    def test_eq_returns_false_for_nonequal_mem_per_cpu(self):
+        res1 = resources.Resource('partition', 1, 3, None, 100)
+        res2 = resources.Resource('partition', 1, 3, None, 200)
+
+        self.assertNotEqual(res1, res2)
+
     def test_repr_returns_dict(self):
         res = resources.Resource('mypartition', 12, 14, 100)
-        self.assertEqual(repr(res), "<Resource object, partition=mypartition, cpus=12, nodes=14, mem=100>")
+        self.assertEqual(repr(res), "<Resource object, partition=mypartition, cpus=12, nodes=14, mem=100, mem_per_cpu=None>")
+
+    def test_repr_has_correct_mem_per_cpu(self):
+        res = resources.Resource('mypartition', 12, 14, None, 200)
+        self.assertEqual(repr(res), "<Resource object, partition=mypartition, cpus=12, nodes=14, mem=None, mem_per_cpu=200>")
 
     def test_conversion_to_dict(self):
         res = resources.Resource('mypartition', 12, 14, 1000)
@@ -177,8 +195,18 @@ class TestResource(unittest.TestCase):
             'ntasks' : 12,
             'nodes' : 14,
             'mem' : 1000,
+            'mem_per_cpu' : None
         }
         self.assertEqual(res.to_dict(), d)
+
+    def test_conversion_to_short_dict(self):
+        res = resources.Resource('mypartition', 12, 14, 1000)
+        d = {
+            'partition' : 'mypartition',
+            'ntasks' : 12,
+            'nodes' : 14
+        }
+        self.assertEqual(res.to_short_dict(), d)
 
 class TestSubsetInternal(unittest.TestCase):
     def test_empty_and_zero_returns_empty(self):
@@ -232,13 +260,13 @@ class TestSubsetInternal(unittest.TestCase):
 class TestGetMaximalResources(unittest.TestCase):
     def test_returns_single_resource(self):
         sinfo_data = slurm.SinfoData(SINFO_STDOUT_TWO_LINE)
-        self.assertEqual(resources.get_maximal_resources(sinfo_data), {'partition': resources.Resource('partition', 8, 2, None)})
+        self.assertEqual(resources.get_maximal_resources(sinfo_data), {'partition': resources.Resource('partition', 8, 2, 16384)})
 
     def test_returns_multiple_resources(self):
         sout = "node01  partition1  0.00  4/0/0/4  1:4:1  idle  8192  8000  0  (null)\n"\
                +"node02  partition2  0.00  4/0/0/4  1:4:1  idle  8192  8000  0  (null)\n"
         sinfo_data = slurm.SinfoData(sout)
-        res = {'partition1': resources.Resource('partition1', 4, 1, None), 'partition2': resources.Resource('partition2', 4, 1, None)}
+        res = {'partition1': resources.Resource('partition1', 4, 1, 8192), 'partition2': resources.Resource('partition2', 4, 1, 8192)}
         self.assertEqual(resources.get_maximal_resources(sinfo_data), res)
 
     def test_returns_no_resource(self):
@@ -246,9 +274,26 @@ class TestGetMaximalResources(unittest.TestCase):
         self.assertEqual(resources.get_maximal_resources(sinfo_data), {})
 
 class TestGetMaximalMemory(unittest.TestCase):
+    def test_returns_total_memory(self):
+        sinfo_data = slurm.SinfoData(SINFO_STDOUT_TWO_LINE)
+        self.assertEqual(resources.get_maximal_memory(sinfo_data), {'partition': 16384})
+
+    def test_returns_sum_of_multiple(self):
+        sout = "node01  partition1  0.00  4/0/0/4  1:4:1  idle  8192  8000  0  (null)\n"\
+               +"node02  partition2  0.00  4/0/0/4  1:4:1  idle  16384  8000  0  (null)\n"\
+               +"node02  partition2  0.00  4/0/0/4  1:4:1  idle  8192  8000  0  (null)\n"
+        sinfo_data = slurm.SinfoData(sout)
+        res = {'partition1': 8192, 'partition2': 24576}
+        self.assertEqual(resources.get_maximal_memory(sinfo_data), res)
+
+    def test_returns_empty_dict_if_empty_input(self):
+        sinfo_data = slurm.SinfoData('')
+        self.assertEqual(resources.get_maximal_memory(sinfo_data), {})
+
+class TestGetMaximalMemPerCpu(unittest.TestCase):
     def test_returns_single_memory(self):
         sinfo_data = slurm.SinfoData(SINFO_STDOUT_TWO_LINE)
-        self.assertEqual(resources.get_maximal_memory(sinfo_data), {'partition': 8192})
+        self.assertEqual(resources.get_maximal_mem_per_cpu(sinfo_data), {'partition': 8192})
 
     def test_returns_max_of_multiple(self):
         sout = "node01  partition1  0.00  4/0/0/4  1:4:1  idle  8192  8000  0  (null)\n"\
@@ -256,9 +301,9 @@ class TestGetMaximalMemory(unittest.TestCase):
                +"node02  partition2  0.00  4/0/0/4  1:4:1  idle  8192  8000  0  (null)\n"
         sinfo_data = slurm.SinfoData(sout)
         res = {'partition1': 8192, 'partition2': 16384}
-        self.assertEqual(resources.get_maximal_memory(sinfo_data), res)
+        self.assertEqual(resources.get_maximal_mem_per_cpu(sinfo_data), res)
 
     def test_returns_empty_dict_if_empty_input(self):
         sinfo_data = slurm.SinfoData('')
-        self.assertEqual(resources.get_maximal_memory(sinfo_data), {})
+        self.assertEqual(resources.get_maximal_mem_per_cpu(sinfo_data), {})
 

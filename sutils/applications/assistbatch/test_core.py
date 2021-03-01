@@ -474,10 +474,9 @@ class TestSubmit(unittest.TestCase):
         core.slurm.sinfo_detail.return_value = core.slurm.SinfoData(sinfo_stdout)
         read.return_value = [resources.Resource('partition', 4, None, None)]
         kwargs = {
-            'partition' : 'partition:value',
-            'ntasks' : 'ntasks:value',
-            'nodes' : 'nodes:value',
-            'mem' : 'mem:value',
+            'partition' : 'partition',
+            'ntasks' : 4,
+            'nodes' : None
         }
         mock_to_dict.return_value = kwargs
 
@@ -485,7 +484,7 @@ class TestSubmit(unittest.TestCase):
             mock_input.return_value = '1'
             with patch("sutils.applications.assistbatch.core.open", my_mock_open(), create=True):
                 core.submit('myfilename')
-        core.slurm.sbatch.assert_called_once_with('myfilename', exclusive=True, **kwargs)
+        core.slurm.sbatch.assert_called_once_with('myfilename', exclusive=True, partition='partition', nodes=1, ntasks=4)
 
     @patch("sutils.applications.assistbatch.core.slurm.sbatch", Mock())
     @patch("sutils.applications.assistbatch.core.slurm.sinfo_detail", Mock())
@@ -518,7 +517,7 @@ class TestSubmit(unittest.TestCase):
                 core.submit('myfilename')
             mock_input.assert_not_called()
             #core.write_sbatch_file.assert_called_once_with('myfilename', resources.Resource('partition', 4, 1, None))
-            core.slurm.sbatch.assert_called_once_with('myfilename', exclusive=True, **resources.Resource('partition', 4, 1, None).to_dict())
+            core.slurm.sbatch.assert_called_once_with('myfilename', exclusive=True, partition='partition', ntasks=4, nodes=1)
 
 class TestAddMaxResources(unittest.TestCase):
     def test_adds_nothing_if_partition_is_idle(self):
@@ -529,30 +528,30 @@ class TestAddMaxResources(unittest.TestCase):
         core.add_max_resources(res_idle, hwinfo)
         self.assertEqual(res_idle, res_idle_cpy)
         
-    def test_adds_single_if_partition_is_not_idle(self):
+    def test_adds_single_if_partition_does_not_have_enough_idle(self):
         sinfo_stdout = "node01  partition  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n"
         hwinfo = slurm.SinfoData(sinfo_stdout)
         res_idle = []
         core.add_max_resources(res_idle, hwinfo)
-        self.assertEqual(res_idle, [resources.Resource('partition', 4, 1, None)])
+        self.assertEqual(res_idle, [resources.Resource('partition', 4, 1, 8192)])
 
-    def test_adds_single_for_multiple_if_partition_is_not_idle(self):
+    def test_adds_single_for_multiple_if_partitions_do_not_have_enough_idle(self):
         sinfo_stdout = "node01  partition1  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n" \
                 + "node01  partition2  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n"
 
         hwinfo = slurm.SinfoData(sinfo_stdout)
         res_idle = []
         core.add_max_resources(res_idle, hwinfo)
-        self.assertEqual(res_idle, [resources.Resource('partition1', 4, 1, None), resources.Resource('partition2', 4, 1, None)])
+        self.assertEqual(res_idle, [resources.Resource('partition1', 4, 1, 8192), resources.Resource('partition2', 4, 1, 8192)])
 
-    def test_adds_single_for_one_of_multiple_if_partition_is_not_idle(self):
+    def test_adds_single_for_one_of_multiple_if_partition_does_not_have_enough_idle(self):
         sinfo_stdout = "node01  partition1  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n" \
                 + "node01  partition2  0.00  0/4/0/4  1:4:1  idle  8192  8000  0  (null)\n"
 
         hwinfo = slurm.SinfoData(sinfo_stdout)
         res_idle = [resources.Resource('partition1', 4, 1, None)]
         core.add_max_resources(res_idle, hwinfo)
-        self.assertEqual(res_idle, [resources.Resource('partition1', 4, 1, None), resources.Resource('partition2', 4, 1, None)])
+        self.assertEqual(res_idle, [resources.Resource('partition1', 4, 1, None), resources.Resource('partition2', 4, 1, 8192)])
 
     @patch("sutils.slurm_interface.resources.get_maximal_resources", create=True)
     def test_calls_get_maximal_resources(self, mock_get_max):
